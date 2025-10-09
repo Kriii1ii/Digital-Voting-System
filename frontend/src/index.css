@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+
+/* in your CSS file */
+.np-datepicker {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d5db; /* gray-300 */
+  border-radius: 0.5rem; /* rounded-lg */
+  outline: none;
+}
+
+.np-datepicker:focus {
+  border-color: #3b82f6; /* blue-500 */
+  box-shadow: 0 0 0 1px #3b82f6;
+}
