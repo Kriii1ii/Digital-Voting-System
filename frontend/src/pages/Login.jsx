@@ -13,23 +13,28 @@ const Login = () => {
     idType: "citizenship",
     idNumber: "",
     voterid: "",
-    role: "voter", 
+    role: "voter",
   });
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setCredentials((prev) => ({ ...prev, [name]: value }));
+    setCredentials({ ...credentials, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    
     if (credentials.email && credentials.password) {
       localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("userEmail", credentials.email);
+      localStorage.setItem("userRole", credentials.role);
 
-      navigate("/");
+      if (credentials.role === "admin") {
+        navigate("/admin-dashboard");
+      } else if (credentials.role === "candidate") {
+        navigate("/");
+      } else {
+        navigate("/");
+      }
     } else {
       alert("Please fill in all required fields.");
     }
@@ -62,7 +67,7 @@ const Login = () => {
         {/* Email */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            {t("email")} *
+            {t("email")} <span className="text-red-500">*</span>
           </label>
           <input
             type="email"
@@ -78,7 +83,7 @@ const Login = () => {
         {/* Password */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            {t("password")} *
+            {t("password")} <span className="text-red-500">*</span>
           </label>
           <input
             type="password"
@@ -94,7 +99,7 @@ const Login = () => {
         {/* Role Selection */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            {t("role")} *
+            {t("role")} <span className="text-red-500">*</span>
           </label>
           <select
             name="role"
@@ -104,13 +109,14 @@ const Login = () => {
           >
             <option value="voter">{t("voter")}</option>
             <option value="candidate">{t("candidate")}</option>
+            <option value="admin">{t("admin")}</option>
           </select>
         </div>
 
         {/* ID Type */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            {t("idType")} *
+            {t("idType")} <span className="text-red-500">*</span>
           </label>
           <select
             name="idType"
@@ -131,9 +137,8 @@ const Login = () => {
             {credentials.idType === "passport"
               ? t("passport")
               : credentials.idType === "national"
-              ? t("national")
-              : t("citizenship")}{" "}
-            *
+                ? t("national")
+                : t("citizenship")}{" "}<span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -149,7 +154,7 @@ const Login = () => {
         {/* Voter ID */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            {t("voterid")} *
+            {t("voterid")} <span className="text-red-500">*</span>
           </label>
           <input
             type="text"

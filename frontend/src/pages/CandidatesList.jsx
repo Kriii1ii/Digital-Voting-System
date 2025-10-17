@@ -1,0 +1,120 @@
+import React, { useState } from "react";
+import AddCandidateModal from "./AddCandidateModal";
+import EditCandidateModal from "./EditCandidateModal";
+import { useLanguage } from "../contexts/LanguageContext";
+
+const CandidatesList = () => {
+    const { t } = useLanguage();
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedCandidate, setSelectedCandidate] = useState(null);
+
+  const [candidates, setCandidates] = useState([
+    {
+      id: 1,
+      fullname: "Saurav Shrestha",
+      bio: ".......",
+    },
+    {
+      id: 2,
+      fullname: "Sijak Shrestha",
+      bio: "tyfhgfjhg",
+      
+    },
+    {
+      id: 3,
+      fullname: "Ansu Stha",
+      bio: "Djhghjt",
+    },
+  ]);
+
+  // Delete candidate
+  const handleDelete = (id) => {
+    setCandidates(candidates.filter((c) => c.id !== id));
+  };
+
+  // Add candidate
+  const handleAdd = (newCandidate) => {
+    setCandidates([...candidates, { id: Date.now(), ...newCandidate }]);
+  };
+
+  // Update candidate
+  const handleUpdate = (updatedCandidate) => {
+    setCandidates(
+      candidates.map((c) => (c.id === updatedCandidate.id ? updatedCandidate : c))
+    );
+  };
+
+  return (
+    <div className="bg-white rounded-xl shadow-md p-6">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold text-slate-700">{t("candidates")}</h1>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md"
+        >
+          {t("addnew")}
+        </button>
+      </div>
+
+      <table className="w-full border-collapse">
+        <thead>
+          <tr className="bg-slate-100 text-left">
+            <th className="p-3 border">{t("fullName")}</th>
+            <th className="p-3 border">{t("bio")}</th>
+            <th className="p-3 border">{t("photo")}</th>
+            <th className="p-3 border">{t("action")}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {candidates.map((c) => (
+            <tr key={c.id} className="hover:bg-slate-50">
+              <td className="p-3 border">{c.fullname}</td>
+              <td className="p-3 border">{c.bio}</td>
+              <td className="p-3 border text-center">
+                <img
+                  src={c.photo}
+                  alt="candidate"
+                  className="w-12 h-12 object-cover rounded-full border mx-auto"
+                />
+              </td>
+              <td className="p-3 border text-center">
+                <button
+                  onClick={() => {
+                    setSelectedCandidate(c);
+                    setShowEditModal(true);
+                  }}
+                  className="bg-blue-800 text-white px-3 py-1 rounded mr-2"
+                >
+                  {t("edit")}
+                </button>
+                <button
+                  onClick={() => handleDelete(c.id)}
+                  className="bg-red-700 text-white px-3 py-1 rounded"
+                >
+                  {t("delete")}
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {showAddModal && (
+        <AddCandidateModal
+          onClose={() => setShowAddModal(false)}
+          onAdd={handleAdd}
+        />
+      )}
+      {showEditModal && (
+        <EditCandidateModal
+          candidate={selectedCandidate}
+          onClose={() => setShowEditModal(false)}
+          onUpdate={handleUpdate}
+        />
+      )}
+    </div>
+  );
+};
+
+export default CandidatesList;

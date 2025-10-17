@@ -24,12 +24,22 @@ const Registration = () => {
     ward: ''
   });
 
+  const [formErrors, setFormErrors] = useState({});
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    if (name === 'fullName') {
+      const lettersOnly = value.replace(/[^a-zA-Z\s]/g, '');
+      setFormData(prev => ({ ...prev, [name]: lettersOnly }));
+    } else if (name === 'phone') {
+      const numbersOnly = value.replace(/\D/g, '');
+      setFormData(prev => ({ ...prev, [name]: numbersOnly }));
+    } else if (name === 'district') {
+      const lettersOnly = value.replace(/[^a-zA-Z]/g, '');
+      setFormData(prev => ({ ...prev, [name]: lettersOnly }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleDateChange = (value) => {
@@ -39,15 +49,49 @@ const Registration = () => {
     }));
   };
 
+  const validateForm = () => {
+    const errors = {};
+
+    if (!formData.fullName.trim()) errors.fullName = "Full name is required";
+    else if (!/^[a-zA-Z\s]+$/.test(formData.fullName)) errors.fullName = "Full name must contain letters and spaces only";
+
+    if (!formData.dateOfBirth) errors.dateOfBirth = "Date of birth is required";
+
+    if (!formData.phone) errors.phone = "Phone is required";
+    else if (!/^\d{10}$/.test(formData.phone)) errors.phone = "Phone must be 10 digits";
+
+    if (!formData.email.includes("@")) errors.email = "Invalid email address";
+
+    if (formData.password.length < 6) errors.password = "Password must be at least 6 characters";
+
+    if (!formData.idNumber) errors.idNumber = "ID is required";
+   
+    if (!formData.confirmPassword) errors.confirmPassword = "Confirm  your Password";
+
+    if (!formData.voterid) errors.voterid = "Voter ID is required";
+
+    if (!formData.province) errors.province = "Province is required";
+
+    if (!formData.district.trim()) errors.district = "District is required";
+
+    if (!formData.ward.trim()) errors.ward = "Ward Number is required";
+    
+    return errors;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
+    const errors = validateForm();
+    setFormErrors(errors);
 
-    navigate('/login');
+    if (Object.keys(errors).length === 0) {
+      console.log("Form submitted:", formData);
+      navigate("/login");
+    }
   };
 
   const handleBack = () => {
-    navigate('/');
+    navigate("/");
   };
 
   return (
@@ -65,7 +109,6 @@ const Registration = () => {
             </button>
           </div>
 
-          {/* Header */}
           <div className="text-center">
             <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-800 rounded-full mb-3">
               <User className="w-6 h-6 text-white" />
@@ -82,7 +125,7 @@ const Registration = () => {
                 {/* Full Name */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('fullName')} *
+                    {t('fullName')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -91,14 +134,14 @@ const Registration = () => {
                     onChange={handleInputChange}
                     placeholder={t('fullNamePlaceholder')}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-all"
-                    required
                   />
+                  {formErrors.fullName && <p className="text-red-500 text-sm mt-1">{formErrors.fullName}</p>}
                 </div>
 
                 {/* Date of Birth */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('dateOfBirth')} *
+                    {t('dateOfBirth')} <span className="text-red-500">*</span>
                   </label>
                   {language === 'np' ? (
                     <NepaliDatePicker
@@ -106,7 +149,6 @@ const Registration = () => {
                       onChange={handleDateChange}
                       className="np-datepicker"
                       placeholder={t('dateOfBirth')}
-                      required
                     />
                   ) : (
                     <input
@@ -115,15 +157,15 @@ const Registration = () => {
                       value={formData.dateOfBirth}
                       onChange={handleInputChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-                      required
                     />
                   )}
+                  {formErrors.dateOfBirth && <p className="text-red-500 text-sm mt-1">{formErrors.dateOfBirth}</p>}
                 </div>
 
                 {/* Phone */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('phone')} *
+                    {t('phone')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="tel"
@@ -132,14 +174,14 @@ const Registration = () => {
                     onChange={handleInputChange}
                     placeholder={t('phonePlaceholder')}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-all"
-                    required
                   />
+                  {formErrors.phone && <p className="text-red-500 text-sm mt-1">{formErrors.phone}</p>}
                 </div>
 
                 {/* Email */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t("email")} *
+                    {t("email")} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="email"
@@ -148,14 +190,14 @@ const Registration = () => {
                     onChange={handleInputChange}
                     placeholder={t("emailPlaceholder")}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-all"
-                    required
                   />
+                  {formErrors.email && <p className="text-red-500 text-sm mt-1">{formErrors.email}</p>}
                 </div>
 
                 {/* Password */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t("password")} *
+                    {t("password")} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="password"
@@ -164,16 +206,29 @@ const Registration = () => {
                     onChange={handleInputChange}
                     placeholder={t("passwordPlaceholder")}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-all"
-                    required
                   />
+                  {formErrors.password && <p className="text-red-500 text-sm mt-1">{formErrors.password}</p>}
                 </div>
 
-                {/* Role Selection */}
                 <div className="md:col-span-2">
-                  <label
-                    className="block text-sm font-medium text-gray-700 mb-3 text-left"
-                  >
-                    {t("role")} *
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {t("confirmPassword")} <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="confirmPassword"
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                    placeholder={t("confirmPasswordPlaceholder")}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-all"
+                  />
+                  {formErrors.confirmPassword && <p className="text-red-500 text-sm mt-1">{formErrors.confirmPassword}</p>}
+                </div>
+
+                {/* Role */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-3 text-left">
+                    {t("role")} <span className="text-red-500">*</span>
                   </label>
                   <select
                     id="role"
@@ -184,20 +239,21 @@ const Registration = () => {
                   >
                     <option value="voter">{t("voter")}</option>
                     <option value="candidate">{t("candidate")}</option>
+                    <option value="admin">{t("admin")}</option>
+                    <option value="electrol committee">{t("electrolCommittee")}</option>
                   </select>
                 </div>
 
-                {/* ID Type Selection */}
+                {/* ID Type */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t("idType")} *
+                    {t("idType")} <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="idType"
                     value={formData.idType}
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-all"
-                    required
                   >
                     <option value="citizenship">{t("citizenship")}</option>
                     <option value="national">{t("national")}</option>
@@ -212,8 +268,7 @@ const Registration = () => {
                       ? t("passport")
                       : formData.idType === "national"
                         ? t("national")
-                        : t("citizenshipNumber")}{" "}
-                    *
+                        : t("citizenshipNumber")} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -222,37 +277,36 @@ const Registration = () => {
                     onChange={handleInputChange}
                     placeholder={t("idPlaceholder")}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-all"
-                    required
                   />
+                  {formErrors.idNumber && <p className="text-red-500 text-sm mt-1">{formErrors.idNumber}</p>}
                 </div>
 
                 {/* Voter ID */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t("voterid")} *
+                    {t("voterid")} <span className="text-red-500">*</span>
                   </label>
                   <input
-                    type="voterid"
+                    type="text"
                     name="voterid"
-                    value={formData.password}
+                    value={formData.voterid}
                     onChange={handleInputChange}
                     placeholder={t("voteridPlaceholder")}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-all"
-                    required
                   />
+                  {formErrors.voterid && <p className="text-red-500 text-sm mt-1">{formErrors.voterid}</p>}
                 </div>
 
                 {/* Province */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('province')} *
+                    {t('province')} <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="province"
                     value={formData.province}
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-all"
-                    required
                   >
                     <option value="">{t('selectProvince')}</option>
                     {t('provinces').map((province) => (
@@ -261,12 +315,13 @@ const Registration = () => {
                       </option>
                     ))}
                   </select>
+                  {formErrors.province && <p className="text-red-500 text-sm mt-1">{formErrors.province}</p>}
                 </div>
 
                 {/* District */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('district')} *
+                    {t('district')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -275,14 +330,14 @@ const Registration = () => {
                     onChange={handleInputChange}
                     placeholder={t("districtPlaceholder")}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-all"
-                    required
                   />
+                  {formErrors.district && <p className="text-red-500 text-sm mt-1">{formErrors.district}</p>}
                 </div>
 
-                {/* Ward Number */}
+                {/* Ward */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t('ward')} *
+                    {t('ward')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
@@ -292,8 +347,8 @@ const Registration = () => {
                     placeholder={t("wardPlaceholder")}
                     min="1"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-all"
-                    required
                   />
+                  {formErrors.ward && <p className="text-red-500 text-sm mt-1">{formErrors.ward}</p>}
                 </div>
               </div>
             </div>
