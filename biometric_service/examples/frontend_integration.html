@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biometric Authentication Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .video-container {
+            position: relative;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        video {
+            width: 100%;
+            display: block;
+        }
+
+        .video-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+            font-size: 18px;
+            background: rgba(0,0,0,0.7);
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .quality-indicator {
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .quality-good {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .quality-bad {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .quality-checking {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .result {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .result-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .result-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Biometric Authentication Demo</h1>
+        <p class="subtitle">Face Recognition System</p>
+
+        <!-- User ID Input -->
+        <div class="section">
+            <h2>User Identification</h2>
+            <div class="input-group">
+                <label for="userId">User ID:</label>
+                <input type="text" id="userId" placeholder="Enter your user ID (e.g., voter123)" value="demo_user">
+            </div>
+        </div>
+
+        <!-- Face Registration -->
+        <div class="section">
+            <h2>📝 Face Registration</h2>
+            
+            <div class="video-container">
+                <video id="videoRegister" autoplay></video>
+                <div id="videoOverlayRegister" class="video-overlay hidden">
+                    Click "Start Camera" to begin
+                </div>
+            </div>
+
+            <div id="qualityIndicatorRegister" class="quality-indicator quality-checking hidden">
+                Checking quality...
+            </div>
+
+            <div>
+                <button class="btn btn-primary" onclick="startCamera('register')">📷 Start Camera</button>
+                <button class="btn btn-success" onclick="captureAndRegister()" id="btnRegister" disabled>✨ Capture & Register</button>
+                <button class="btn btn-danger" onclick="stopCamera('register')">⏹️ Stop Camera</button>
+            </div>
+
+            <div id="resultRegister"></div>
+        </div>
+
+        <!-- Face Authentication -->
+        <div class="section">
+            <h2>🔐 Face Authentication</h2>
+            
+            <div class="video-container">
+                <video id="videoAuth" autoplay></video>
+                <div id="videoOverlayAuth" class="video-overlay hidden">
+                    Click "Start Camera" to begin
+                </div>
+            </div>
+
+            <div id="qualityIndicatorAuth" class="quality-indicator quality-checking hidden">
+                Checking quality...
+            </div>
+
+            <div>
+                <button class="btn btn-primary" onclick="startCamera('auth')">📷 Start Camera</button>
+                <button class="btn btn-success" onclick="captureAndAuthenticate()" id="btnAuth" disabled>🔓 Capture & Authenticate</button>
+                <button class="btn btn-danger" onclick="stopCamera('auth')">⏹️ Stop Camera</button>
+            </div>
+
+            <div id="resultAuth"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000';
+        let streams = { register: null, auth: null };
+        let qualityCheckIntervals = { register: null, auth: null };
+
+        async function startCamera(type) {
+            try {
+                const video = document.getElementById(`video${type === 'register' ? 'Register' : 'Auth'}`);
+                const overlay = document.getElementById(`videoOverlay${type === 'register' ? 'Register' : 'Auth'}`);
+                const btn = document.getElementById(`btn${type === 'register' ? 'Register' : 'Auth'}`);
+                const qualityIndicator = document.getElementById(`qualityIndicator${type === 'register' ? 'Register' : 'Auth'}`);
+
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: 640, height: 480 } 
+                });
+                
+                video.srcObject = stream;
+                streams[type] = stream;
+                overlay.classList.add('hidden');
+                btn.disabled = false;
+                qualityIndicator.classList.remove('hidden');
+
+                // Start quality checking
+                startQualityCheck(type);
+
+                showResult(type, 'Camera started successfully', 'success');
+            } catch (error) {
+                showResult(type, `Failed to start camera: ${error.message}`, 'error');
+            }
+        }
+
+        function stopCamera(type) {
+            const video = document.getElementById(`video${type === 'register' ? 'Register' : 'Auth'}`);
+            const overlay = document.getElementById(`videoOverlay${type === 'register' ? 'Register' : 'Auth'}`);
+            const btn = document.getElementById(`btn${type === 'register' ? 'Register' : 'Auth'}`);
+            const qualityIndicator = document.getElementById(`qualityIndicator${type === 'register' ? 'Register' : 'Auth'}`);
+
+            if (streams[type]) {
+                streams[type].getTracks().forEach(track => track.stop());
+                streams[type] = null;
+                video.srcObject = null;
+                overlay.classList.remove('hidden');
+                btn.disabled = true;
+                qualityIndicator.classList.add('hidden');
+
+                // Stop quality checking
+                if (qualityCheckIntervals[type]) {
+                    clearInterval(qualityCheckIntervals[type]);
+                    qualityCheckIntervals[type] = null;
+                }
+
+                showResult(type, 'Camera stopped', 'success');
+            }
+        }
+
+        function startQualityCheck(type) {
+            // Check quality every 2 seconds
+            qualityCheckIntervals[type] = setInterval(async () => {
+                const imageBase64 = captureImage(type);
+                if (imageBase64) {
+                    await checkQuality(type, imageBase64);
+                }
+            }, 2000);
+        }
+
+        function captureImage(type) {
+            const video = document.getElementById(`video${type === 'register' ? 'Register' : 'Auth'}`);
+            
+            if (!video.videoWidth) return null;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            return canvas.toDataURL('image/jpeg');
+        }
+
+        async function checkQuality(type, imageBase64) {
+            const qualityIndicator = document.getElementById(`qualityIndicator${type === 'register' ? 'Register' : 'Auth'}`);
+
+            try {
+                const response = await fetch(`${API_BASE}/face/quality-check`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ imageBase64 })
+                });
+
+                const result = await response.json();
+
+                if (result.passed) {
+                    qualityIndicator.className = 'quality-indicator quality-good';
+                    qualityIndicator.textContent = '✅ Good quality - ready to capture!';
+                } else {
+                    qualityIndicator.className = 'quality-indicator quality-bad';
+                    qualityIndicator.textContent = '⚠️ ' + result.reasons.join(', ');
+                }
+            } catch (error) {
+                qualityIndicator.className = 'quality-indicator quality-checking';
+                qualityIndicator.textContent = '⚠️ Quality check failed';
+            }
+        }
+
+        async function captureAndRegister() {
+            const userId = document.getElementById('userId').value.trim();
+            if (!userId) {
+                showResult('register', 'Please enter a User ID', 'error');
+                return;
+            }
+
+            const imageBase64 = captureImage('register');
+            if (!imageBase64) {
+                showResult('register', 'Failed to capture image', 'error');
+                return;
+            }
+
+            showResult('register', '<span class="loading"></span>Registering face...', 'success');
+
+            try {
+                const response = await fetch(`${API_BASE}/face/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, imageBase64 })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showResult('register', `✅ ${result.message}`, 'success');
+                } else {
+                    showResult('register', `❌ Registration failed:\n${result.reasons.join('\n')}`, 'error');
+                }
+            } catch (error) {
+                showResult('register', `❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function captureAndAuthenticate() {
+            const userId = document.getElementById('userId').value.trim();
+            if (!userId) {
+                showResult('auth', 'Please enter a User ID', 'error');
+                return;
+            }
+
+            const imageBase64 = captureImage('auth');
+            if (!imageBase64) {
+                showResult('auth', 'Failed to capture image', 'error');
+                return;
+            }
+
+            showResult('auth', '<span class="loading"></span>Authenticating...', 'success');
+
+            try {
+                const response = await fetch(`${API_BASE}/face/authenticate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, imageBase64 })
+                });
+
+                const result = await response.json();
+
+                if (result.match) {
+                    showResult('auth', `✅ Authentication successful! (Score: ${result.score.toFixed(3)})`, 'success');
+                } else {
+                    showResult('auth', `❌ Authentication failed. Face does not match. (Score: ${result.score.toFixed(3)})`, 'error');
+                }
+            } catch (error) {
+                showResult('auth', `❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        function showResult(type, message, status) {
+            const resultDiv = document.getElementById(`result${type === 'register' ? 'Register' : 'Auth'}`);
+            resultDiv.className = `result result-${status}`;
+            resultDiv.innerHTML = message;
+        }
+
+        // Check if API is available on load
+        window.onload = async () => {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                if (response.ok) {
+                    console.log('✅ Biometric API is available');
+                }
+            } catch (error) {
+                alert('⚠️ Cannot connect to Biometric API. Please ensure the service is running at ' + API_BASE);
+            }
+        };
+    </script>
+</body>
+</html>

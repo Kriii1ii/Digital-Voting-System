@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  biometric-service:
+    build: .
+    container_name: biometric_verification_service
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - FACE_MATCH_TOLERANCE=0.45
+      - MIN_BLUR_SCORE=100
+      - MIN_BRIGHTNESS=50
+      - MAX_BRIGHTNESS=200
+      - LOG_LEVEL=INFO
+    volumes:
+      # Persist face data
+      - ./data:/app/data
+      # Mount .env file if it exists
+      - ./.env:/app/.env:ro
+    restart: unless-stopped
+    networks:
+      - voting-network
+
+networks:
+  voting-network:
+    driver: bridge
