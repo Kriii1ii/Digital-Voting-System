@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biometric Authentication Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+        }
+
+        .video-container {
+            position: relative;
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        video {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 3px solid transparent;
+            pointer-events: none;
+            transition: border-color 0.3s;
+        }
+
+        .overlay.good {
+            border-color: #10b981;
+        }
+
+        .overlay.bad {
+            border-color: #ef4444;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        button {
+            flex: 1;
+            min-width: 150px;
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        input {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: #667eea;
+        }
+
+        .feedback {
+            margin-top: 20px;
+        }
+
+        .feedback-item {
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .feedback-item.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .feedback-item.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .feedback-item.info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .metric-card {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .status {
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-weight: 600;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-weight: 600;
+            color: #6b7280;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Biometric Authentication Test</h1>
+
+        <div class="card">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('face')">Face Recognition</button>
+                <button class="tab" onclick="switchTab('fingerprint')">Fingerprint</button>
+            </div>
+
+            <!-- Face Recognition Tab -->
+            <div id="face-tab" class="tab-content active">
+                <div class="controls">
+                    <input type="text" id="userId" placeholder="Enter User ID" value="test123">
+                    <button class="btn-primary" onclick="startCamera()">Start Camera</button>
+                    <button class="btn-secondary" onclick="stopCamera()">Stop Camera</button>
+                </div>
+
+                <div class="video-container">
+                    <video id="video" autoplay playsinline></video>
+                    <div id="overlay" class="overlay"></div>
+                </div>
+
+                <div class="controls">
+                    <button class="btn-success" onclick="registerFace()" id="registerBtn">Register Face</button>
+                    <button class="btn-primary" onclick="authenticateFace()" id="authenticateBtn">Authenticate Face</button>
+                    <button class="btn-danger" onclick="deleteFace()" id="deleteBtn">Delete Registration</button>
+                </div>
+
+                <div id="feedback" class="feedback"></div>
+                <div id="metrics" class="metrics"></div>
+            </div>
+
+            <!-- Fingerprint Tab -->
+            <div id="fingerprint-tab" class="tab-content">
+                <div class="controls">
+                    <input type="text" id="fingerprintUserId" placeholder="Enter User ID" value="test123">
+                </div>
+
+                <div class="status">
+                    <p id="fingerprintStatus">Ready to scan fingerprint</p>
+                </div>
+
+                <div class="controls">
+                    <button class="btn-success" onclick="registerFingerprint()">Register Fingerprint</button>
+                    <button class="btn-primary" onclick="authenticateFingerprint()">Authenticate Fingerprint</button>
+                    <button class="btn-danger" onclick="deleteFingerprint()">Delete Registration</button>
+                </div>
+
+                <div id="fingerprintFeedback" class="feedback"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+        let video = document.getElementById('video');
+        let stream = null;
+        let qualityCheckInterval = null;
+
+        function switchTab(tab) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(`${tab}-tab`).classList.add('active');
+        }
+
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: 640, height: 480, facingMode: 'user' } 
+                });
+                video.srcObject = stream;
+                
+                showFeedback('Camera started successfully', 'success');
+                
+                // Start quality checking
+                qualityCheckInterval = setInterval(checkQualityRealtime, 1000);
+            } catch (err) {
+                showFeedback('Error accessing camera: ' + err.message, 'error');
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+                stream = null;
+                showFeedback('Camera stopped', 'info');
+                
+                if (qualityCheckInterval) {
+                    clearInterval(qualityCheckInterval);
+                    qualityCheckInterval = null;
+                }
+            }
+        }
+
+        function captureImage() {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            return canvas.toDataURL('image/jpeg', 0.95);
+        }
+
+        async function checkQualityRealtime() {
+            if (!stream) return;
+
+            try {
+                const imageBase64 = captureImage();
+                const response = await fetch(`${API_URL}/face/quality-check`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ imageBase64 })
+                });
+
+                const result = await response.json();
+                
+                // Update overlay
+                const overlay = document.getElementById('overlay');
+                overlay.className = 'overlay ' + (result.passed ? 'good' : 'bad');
+                
+                // Update metrics silently
+                if (result.metrics) {
+                    updateMetrics(result.metrics);
+                }
+            } catch (err) {
+                console.error('Quality check failed:', err);
+            }
+        }
+
+        async function registerFace() {
+            const userId = document.getElementById('userId').value;
+            if (!userId) {
+                showFeedback('Please enter a User ID', 'error');
+                return;
+            }
+
+            if (!stream) {
+                showFeedback('Please start the camera first', 'error');
+                return;
+            }
+
+            try {
+                const imageBase64 = captureImage();
+                showFeedback('Processing...', 'info');
+
+                const response = await fetch(`${API_URL}/face/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, imageBase64 })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showFeedback('✅ ' + result.message, 'success');
+                    if (result.feedback) {
+                        result.feedback.forEach(f => showFeedback(f, 'info'));
+                    }
+                    if (result.metrics) {
+                        updateMetrics(result.metrics);
+                    }
+                } else {
+                    showFeedback('❌ Registration failed', 'error');
+                    if (result.reasons) {
+                        result.reasons.forEach(r => showFeedback(r, 'error'));
+                    }
+                    if (result.feedback) {
+                        result.feedback.forEach(f => showFeedback(f, 'info'));
+                    }
+                }
+            } catch (err) {
+                showFeedback('Error: ' + err.message, 'error');
+            }
+        }
+
+        async function authenticateFace() {
+            const userId = document.getElementById('userId').value;
+            if (!userId) {
+                showFeedback('Please enter a User ID', 'error');
+                return;
+            }
+
+            if (!stream) {
+                showFeedback('Please start the camera first', 'error');
+                return;
+            }
+
+            try {
+                const imageBase64 = captureImage();
+                showFeedback('Authenticating...', 'info');
+
+                const response = await fetch(`${API_URL}/face/authenticate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, imageBase64 })
+                });
+
+                const result = await response.json();
+
+                if (result.success && result.match) {
+                    showFeedback(`✅ ${result.message}`, 'success');
+                    showFeedback(`Match Score: ${result.score.toFixed(3)} (${result.confidence})`, 'info');
+                } else if (result.success && !result.match) {
+                    showFeedback(`❌ ${result.message}`, 'error');
+                    showFeedback(`Match Score: ${result.score.toFixed(3)}`, 'info');
+                } else {
+                    showFeedback('Authentication failed', 'error');
+                }
+
+                if (result.metrics) {
+                    updateMetrics(result.metrics);
+                }
+            } catch (err) {
+                showFeedback('Error: ' + err.message, 'error');
+            }
+        }
+
+        async function deleteFace() {
+            const userId = document.getElementById('userId').value;
+            if (!userId) {
+                showFeedback('Please enter a User ID', 'error');
+                return;
+            }
+
+            if (!confirm(`Delete face registration for ${userId}?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/face/delete/${userId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+                showFeedback(result.message, result.success ? 'success' : 'error');
+            } catch (err) {
+                showFeedback('Error: ' + err.message, 'error');
+            }
+        }
+
+        async function registerFingerprint() {
+            const userId = document.getElementById('fingerprintUserId').value;
+            if (!userId) {
+                showFingerprintFeedback('Please enter a User ID', 'error');
+                return;
+            }
+
+            try {
+                document.getElementById('fingerprintStatus').textContent = 'Scanning fingerprint...';
+                showFingerprintFeedback('Place your finger on the sensor', 'info');
+
+                const response = await fetch(`${API_URL}/fingerprint/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId })
+                });
+
+                const result = await response.json();
+                document.getElementById('fingerprintStatus').textContent = result.message;
+                showFingerprintFeedback('✅ ' + result.message, 'success');
+            } catch (err) {
+                showFingerprintFeedback('Error: ' + err.message, 'error');
+            }
+        }
+
+        async function authenticateFingerprint() {
+            const userId = document.getElementById('fingerprintUserId').value;
+            if (!userId) {
+                showFingerprintFeedback('Please enter a User ID', 'error');
+                return;
+            }
+
+            try {
+                document.getElementById('fingerprintStatus').textContent = 'Authenticating...';
+                showFingerprintFeedback('Place your finger on the sensor', 'info');
+
+                const response = await fetch(`${API_URL}/fingerprint/authenticate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId })
+                });
+
+                const result = await response.json();
+                document.getElementById('fingerprintStatus').textContent = result.message;
+                showFingerprintFeedback('✅ ' + result.message, 'success');
+            } catch (err) {
+                showFingerprintFeedback('Error: ' + err.message, 'error');
+            }
+        }
+
+        async function deleteFingerprint() {
+            const userId = document.getElementById('fingerprintUserId').value;
+            if (!userId) {
+                showFingerprintFeedback('Please enter a User ID', 'error');
+                return;
+            }
+
+            if (!confirm(`Delete fingerprint registration for ${userId}?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/fingerprint/delete/${userId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+                showFingerprintFeedback(result.message, result.success ? 'success' : 'error');
+            } catch (err) {
+                showFingerprintFeedback('Error: ' + err.message, 'error');
+            }
+        }
+
+        function showFeedback(message, type) {
+            const feedback = document.getElementById('feedback');
+            const item = document.createElement('div');
+            item.className = `feedback-item ${type}`;
+            item.textContent = message;
+            feedback.insertBefore(item, feedback.firstChild);
+
+            // Remove old items (keep last 5)
+            while (feedback.children.length > 5) {
+                feedback.removeChild(feedback.lastChild);
+            }
+        }
+
+        function showFingerprintFeedback(message, type) {
+            const feedback = document.getElementById('fingerprintFeedback');
+            const item = document.createElement('div');
+            item.className = `feedback-item ${type}`;
+            item.textContent = message;
+            feedback.insertBefore(item, feedback.firstChild);
+
+            // Remove old items
+            while (feedback.children.length > 3) {
+                feedback.removeChild(feedback.lastChild);
+            }
+        }
+
+        function updateMetrics(metrics) {
+            const metricsDiv = document.getElementById('metrics');
+            metricsDiv.innerHTML = '';
+
+            for (const [key, value] of Object.entries(metrics)) {
+                const card = document.createElement('div');
+                card.className = 'metric-card';
+                card.innerHTML = `
+                    <div class="metric-label">${key.replace('_', ' ')}</div>
+                    <div class="metric-value">${typeof value === 'number' ? value.toFixed(1) : value}</div>
+                `;
+                metricsDiv.appendChild(card);
+            }
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', stopCamera);
+    </script>
+</body>
+</html>

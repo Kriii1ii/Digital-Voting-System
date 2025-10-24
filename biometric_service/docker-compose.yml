@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  biometric-service:
+    build: .
+    container_name: biometric_verification_service
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount data directory to persist face encodings
+      - ./data:/app/data
+      # Mount code for development (remove in production)
+      - ./app.py:/app/app.py
+      - ./models:/app/models
+      - ./utils:/app/utils
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    networks:
+      - voting-network
+
+networks:
+  voting-network:
+    driver: bridge
