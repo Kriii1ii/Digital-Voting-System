@@ -5,11 +5,12 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 import morgan from 'morgan';
+import { Server } from "socket.io";
 
 import connectDB from './config/db.js';
 import authRoutes from './routes/auth.js';
 import electionRoutes from './routes/election.js';
-
+import voteRoutes from './routes/vote.js';
 
 dotenv.config();
 
@@ -48,6 +49,7 @@ app.get('/api/health', (req, res) => {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/election', electionRoutes);
+app.use('/api/vote', voteRoutes);
 
 
 // 404 handler
@@ -67,4 +69,23 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+});
+
+const server = app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
+export const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5173",
+    credentials: true,
+  },
+});
+
+io.on("connection", (socket) => {
+  console.log("New client connected", socket.id);
+
+  socket.on("joinElection", (electionId) => {
+    socket.join(electionId); // join a room for that election
+  });
 });
