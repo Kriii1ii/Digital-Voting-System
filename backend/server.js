@@ -10,11 +10,7 @@ import morgan from 'morgan';
 
 import connectDB from './config/db.js';
 import authRoutes from './routes/auth.js';
-<<<<<<< HEAD
 import candidateRoutes from './routes/candidate.js';
-=======
-import electionRoutes from './routes/election.js';
->>>>>>> d815091d17ceeae76fc7008b295eea97276a2fd0
 
 
 dotenv.config();
@@ -53,7 +49,6 @@ app.get('/api/health', (req, res) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
-<<<<<<< HEAD
 app.use('/api/candidates', candidateRoutes);
 app.use('/api/results', require('./routes/results'));
 app.use('/api/prediction', require('./routes/prediction'));
@@ -81,9 +76,6 @@ app.use('/api/prediction', require('./routes/prediction'));
 
 
 
-=======
-app.use('/api/election', electionRoutes);
->>>>>>> d815091d17ceeae76fc7008b295eea97276a2fd0
 
 
 // 404 handler
