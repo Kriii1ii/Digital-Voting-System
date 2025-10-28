@@ -1,6 +1,6 @@
 import express from 'express';
 import mongoose from 'mongoose';
-import http from "http";               
+import http from "http";
 import { Server } from "socket.io";
 import cors from 'cors';
 import helmet from 'helmet';
@@ -12,7 +12,6 @@ import connectDB from './config/db.js';
 import authRoutes from './routes/auth.js';
 import candidateRoutes from './routes/candidate.js';
 
-
 dotenv.config();
 
 const app = express();
@@ -22,10 +21,12 @@ connectDB();
 
 // Middleware
 app.use(express.json({ limit: '10mb' }));
-app.use(cors({
-  origin: 'http://localhost:5173', // frontend URL
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: 'http://localhost:5173', // frontend URL
+    credentials: true,
+  })
+);
 app.use(helmet());
 app.use(morgan('dev'));
 
@@ -33,7 +34,7 @@ app.use(morgan('dev'));
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
-  message: 'Too many requests from this IP, try again later.'
+  message: 'Too many requests from this IP, try again later.',
 });
 app.use(limiter);
 
@@ -79,7 +80,7 @@ app.use('/api/prediction', require('./routes/prediction'));
 
 
 // 404 handler
-app.use( (req, res, next) => {
+app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
@@ -88,11 +89,31 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(err.status || 500).json({
     success: false,
-    message: err.message || 'Server Error'
+    message: err.message || 'Server Error',
   });
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+});
+
+// ✅ Socket.IO setup
+export const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5173",
+    credentials: true,
+  },
+});
+
+io.on("connection", (socket) => {
+  console.log("New client connected", socket.id);
+
+  socket.on("joinElection", (electionId) => {
+    socket.join(electionId); // join a room for that election
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Client disconnected", socket.id);
+  });
 });

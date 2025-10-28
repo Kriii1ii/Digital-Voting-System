@@ -1,8 +1,7 @@
-// controllers/predictionController.js
-const Candidate = require('../models/candidate');
-const Election = require('../models/Election');
+import Candidate from '../models/candidate.js';
+import Election from '../models/Election.js';
 
-exports.predictWinner = async (req, res) => {
+export const predictWinner = async (req, res) => {
   try {
     const { electionId } = req.params;
     const election = await Election.findById(electionId).populate('candidates');

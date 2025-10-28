@@ -1,14 +1,14 @@
 import express from 'express';
-import User from './models/User.js';
+import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 import generateToken from '../utils/generateToken.js';
 
 const router = express.Router();
 
-// Generate JWT
-const generateToken = (id, role) => {
-  return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '7d' });
-};
+// // Generate JWT
+// const generateToken = (id, role) => {
+//   return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+// };
 
 
 // @route   POST /api/auth/register
