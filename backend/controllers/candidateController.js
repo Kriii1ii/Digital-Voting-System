@@ -1,5 +1,5 @@
 
-import Candidate from '../models/candidate.js';
+import Candidate from '../models/Candidate.js';
 
 // Add new candidate
 export const addCandidate = async (req, res) => {

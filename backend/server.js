@@ -15,8 +15,8 @@ import resultsRoutes from './routes/results.js';
 import predictionRoutes from './routes/prediction.js';
 import authRoutes from './routes/auth.js';
 import candidateRoutes from './routes/candidate.js';
-import voterRoutes from './routes/voterRoutes.js';
-
+import voterRoutes from './routes/voter.js';
+import VoteRoutes from './routes/voteRoutes.js';
 dotenv.config();
 
 // Initialize app and connect DB
@@ -59,6 +59,7 @@ app.use('/api/election', electionRoutes);
 app.use('/api/results', resultsRoutes);
 app.use('/api/prediction', predictionRoutes);
 app.use('/api/voters', voterRoutes);
+app.use('/api/votes', VoteRoutes);
 
 // 404 handler
 app.use((req, res) => res.status(404).json({ message: 'Route not found' }));

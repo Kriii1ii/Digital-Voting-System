@@ -1,5 +1,5 @@
 import User from '../models/User.js';
-import Voter from '../models/voter.js';
+import Voter from '../models/Voter.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 

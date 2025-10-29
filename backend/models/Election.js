@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import { protect, adminOnly } from '../middleware/authMiddleware.js';
+import { createElection, getElections } from '../controllers/electionController.js';
 
 const candidateSchema = new mongoose.Schema({
   name: { type: String, required: true },
