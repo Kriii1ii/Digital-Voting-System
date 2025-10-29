@@ -1,15 +1,9 @@
+// backend/routes/auth.js
 import express from 'express';
-import User from './models/User.js';
-import jwt from 'jsonwebtoken';
+import User from '../models/User.js';                 // <-- fix path (was ./models)
 import generateToken from '../utils/generateToken.js';
 
 const router = express.Router();
-
-// Generate JWT
-const generateToken = (id, role) => {
-  return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '7d' });
-};
-
 
 // @route   POST /api/auth/register
 // @desc    Register user
@@ -20,16 +14,18 @@ router.post('/register', async (req, res) => {
     // Check if user exists
     const userExists = await User.findOne({ $or: [{ email }, { voterid }, { idNumber }] });
     if (userExists) {
-      return res.status(400).json({ success: false, message: 'User already exists with this email, voter ID or ID number' });
+      return res
+        .status(400)
+        .json({ success: false, message: 'User already exists with this email, voter ID or ID number' });
     }
 
+    // Create user first
+    const user = await User.create({ email, password, fullName, voterid, idNumber, role });
+
+    // Then issue token
     const token = generateToken(user._id, user.role);
-    res.json({ token });
 
-
-    const user = await User.create(req.body);
-
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: 'Registration successful',
       data: {
@@ -37,12 +33,12 @@ router.post('/register', async (req, res) => {
         fullName: user.fullName,
         email: user.email,
         role: user.role,
-        token: generateToken(user._id)
-      }
+        token,
+      },
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, message: 'Server Error' });
+    return res.status(500).json({ success: false, message: 'Server Error' });
   }
 });
 
@@ -52,13 +48,20 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ success: false, message: 'Invalid email or password' });
+    // If your schema sets password { select: false }, keep .select('+password'); otherwise remove it.
+    const user = await User.findOne({ email }).select('+password');
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'Invalid email or password' });
+    }
 
     const isMatch = await user.matchPassword(password);
-    if (!isMatch) return res.status(400).json({ success: false, message: 'Invalid email or password' });
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: 'Invalid email or password' });
+    }
 
-    res.status(200).json({
+    const token = generateToken(user._id, user.role);
+
+    return res.status(200).json({
       success: true,
       message: 'Login successful',
       data: {
@@ -66,12 +69,12 @@ router.post('/login', async (req, res) => {
         fullName: user.fullName,
         email: user.email,
         role: user.role,
-        token: generateToken(user._id)
-      }
+        token,
+      },
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, message: 'Server Error' });
+    return res.status(500).json({ success: false, message: 'Server Error' });
   }
 });
 
