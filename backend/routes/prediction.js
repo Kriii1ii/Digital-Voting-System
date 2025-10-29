@@ -1,10 +1,10 @@
-// routes/prediction.js
-const express = require('express');
+import express from "express";
+import { predictWinner } from "../controllers/predictionController.js";
+import { protect, adminOnly } from "../middleware/authMiddleware.js";
+
 const router = express.Router();
-const { predictWinner } = require('../controllers/predictionController');
-const { protect, adminOnly } = require('../middleware/authMiddleware');
 
 // Admin triggers AI prediction
-router.get('/:electionId', protect, adminOnly, predictWinner);
+router.get("/:electionId", protect, adminOnly, predictWinner);
 
-module.exports = router;
+export default router;
