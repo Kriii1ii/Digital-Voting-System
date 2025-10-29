@@ -1,33 +1,32 @@
+// backend/server.js
 import express from 'express';
-import mongoose from 'mongoose';
-import http from "http";
-import { Server } from "socket.io";
+import http from 'http';
+import { Server } from 'socket.io';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
-import rateLimit from 'express-rate-limit';
 import morgan from 'morgan';
-
+import rateLimit from 'express-rate-limit';
 import connectDB from './config/db.js';
+
+// Routes
 import authRoutes from './routes/auth.js';
 import candidateRoutes from './routes/candidate.js';
-=======
 import electionRoutes from './routes/election.js';
->>>>>>> d815091d17ceeae76fc7008b295eea97276a2fd0
-
+import resultsRoutes from './routes/results.js';
+import predictionRoutes from './routes/prediction.js';
 
 dotenv.config();
 
+// Initialize app and connect DB
 const app = express();
-
-// Connect to MongoDB
 connectDB();
 
 // Middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(
   cors({
-    origin: 'http://localhost:5173', // frontend URL
+    origin: 'http://localhost:5173', // your frontend
     credentials: true,
   })
 );
@@ -35,64 +34,34 @@ app.use(helmet());
 app.use(morgan('dev'));
 
 // Rate limiter
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: 'Too many requests from this IP, try again later.',
-});
-app.use(limiter);
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100,
+    message: 'Too many requests from this IP, try again later.',
+  })
+);
 
-// Default route
-app.get('/', (req, res) => {
-  res.status(200).send('Real-Time Digital Voting System Backend Running 🚀');
-});
+// Basic routes
+app.get('/', (req, res) =>
+  res.status(200).send('🚀 Real-Time Digital Voting System Backend Running')
+);
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'OK', message: 'Backend is healthy' });
-});
+app.get('/api/health', (req, res) =>
+  res.status(200).json({ status: 'OK', message: 'Backend is healthy' })
+);
 
-// Routes
+// API routes
 app.use('/api/auth', authRoutes);
-<<<<<<< HEAD
 app.use('/api/candidates', candidateRoutes);
-app.use('/api/results', require('./routes/results'));
-app.use('/api/prediction', require('./routes/prediction'));
-
-// Create server and attach socket.io
-// const server = http.createServer(app);
-// const io = new Server(server, {
-//   cors: {
-//     origin: "*", // or specific frontend URL
-//     methods: ["GET", "POST"]
-//   }
-// });
-
-// ⚡ Handle new socket connections
-// io.on("connection", (socket) => {
-//   console.log("A user connected:", socket.id);
-
-//   socket.on("disconnect", () => {
-//     console.log("User disconnected:", socket.id);
-//   });
-// });
-
-// // Make io accessible globally (for vote routes)
-// app.set("io", io);
-
-
-
-=======
 app.use('/api/election', electionRoutes);
->>>>>>> d815091d17ceeae76fc7008b295eea97276a2fd0
-
+app.use('/api/results', resultsRoutes);
+app.use('/api/prediction', predictionRoutes);
 
 // 404 handler
-app.use((req, res) => {
-  res.status(404).json({ message: 'Route not found' });
-});
+app.use((req, res) => res.status(404).json({ message: 'Route not found' }));
 
-// Error handler
+// Global error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(err.status || 500).json({
@@ -101,27 +70,31 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Create server and attach socket.io
 const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+const server = http.createServer(app);
 
-// ✅ Socket.IO setup
 export const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: 'http://localhost:5173',
     credentials: true,
   },
 });
 
-io.on("connection", (socket) => {
-  console.log("New client connected", socket.id);
+// Socket.IO logic
+io.on('connection', (socket) => {
+  console.log('New client connected:', socket.id);
 
-  socket.on("joinElection", (electionId) => {
-    socket.join(electionId); // join a room for that election
+  socket.on('joinElection', (electionId) => {
+    socket.join(electionId);
   });
 
-  socket.on("disconnect", () => {
-    console.log("Client disconnected", socket.id);
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id);
   });
 });
+
+// Start server
+server.listen(PORT, () =>
+  console.log(`✅ Server running on http://localhost:${PORT}`)
+);

@@ -1,16 +1,9 @@
 // backend/routes/auth.js
 import express from 'express';
-import User from './models/User.js';
-import jwt from 'jsonwebtoken';
-import generateToken from '../utils/generateToken.js';
+import User from '../models/User.js';
+import generateToken from '../utils/generateToken.js'; // ✅ already handles JWT creation
 
 const router = express.Router();
-
-// Generate JWT
-const generateToken = (id, role) => {
-  return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '7d' });
-};
-
 
 // @route   POST /api/auth/register
 // @desc    Register user
@@ -26,10 +19,10 @@ router.post('/register', async (req, res) => {
         .json({ success: false, message: 'User already exists with this email, voter ID or ID number' });
     }
 
-    // Create user first
+    // Create user
     const user = await User.create({ email, password, fullName, voterid, idNumber, role });
 
-    // Then issue token
+    // Issue JWT token
     const token = generateToken(user._id, user.role);
 
     return res.status(201).json({
