@@ -18,6 +18,7 @@ const userSchema = new mongoose.Schema({
   province: { type: String, required: true },
   district: { type: String, required: true },
   ward: { type: Number, required: true },
+  verified: { type: Boolean, default: false },
 }, { timestamps: true });
 
 // Hash password before saving

@@ -20,7 +20,7 @@ router.post('/register', async (req, res) => {
     }
 
     // Create user
-    const user = await User.create({ email, password, fullName, voterid, idNumber, role });
+    const user = await User.create({ email, password, fullName, voterid, idNumber, role , verified:false});
 
     // Issue JWT token
     const token = generateToken(user._id, user.role);
