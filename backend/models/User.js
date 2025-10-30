@@ -93,11 +93,5 @@ userSchema.pre('save', async function (next) {
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return bcrypt.compare(enteredPassword, this.password);
 };
-
-// Helpful compound indexes (optional)
-userSchema.index({ role: 1, isVerified: 1 });
-userSchema.index({ email: 1 }, { unique: true });
-userSchema.index({ voterId: 1 }, { unique: true });
-
 const User = mongoose.model('User', userSchema);
 export default User;

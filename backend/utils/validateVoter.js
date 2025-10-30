@@ -1,5 +1,4 @@
-// utils/validateVoter.js
-import User from '../models/user.js';
+import User from '../models/User.js';
 
 /**
  * Validate if a voter is eligible to vote

@@ -1,4 +1,4 @@
-import Candidate from '../models/candidate.js';
+import Candidate from '../models/Candidate.js';
 import Election from '../models/Election.js';
 
 export const predictWinner = async (req, res) => {

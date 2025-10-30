@@ -1,4 +1,4 @@
-// backend/controllers/electionController.js
+
 import Election from '../models/Election.js';
 import Candidate from '../models/Candidate.js'; // ✅ case-sensitive on Linux/Mac
 import mongoose from 'mongoose';

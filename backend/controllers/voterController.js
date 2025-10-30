@@ -1,4 +1,3 @@
-// backend/controllers/voterController.js
 import User from '../models/User.js';
 import Voter from '../models/Voter.js';
 

@@ -1,4 +1,3 @@
-// backend/models/Voter.js
 import mongoose from "mongoose";
 
 const voterSchema = new mongoose.Schema(

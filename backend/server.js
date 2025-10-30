@@ -8,6 +8,8 @@ import dotenv from 'dotenv';
 import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import connectDB from './config/db.js';
+import events from 'events';
+events.defaultMaxListeners = 20; // or 0 for unlimited, but 20 is safer
 
 // Routes
 import electionRoutes from './routes/election.js';
@@ -15,8 +17,8 @@ import resultsRoutes from './routes/results.js';
 import predictionRoutes from './routes/prediction.js';
 import authRoutes from './routes/auth.js';
 import candidateRoutes from './routes/candidate.js';
-import voterRoutes from './routes/voter.js';
-import VoteRoutes from './routes/voteRoutes.js';
+import VoterRoutes from './routes/voter.js';
+import VoteRoutes from './routes/vote.js';
 dotenv.config();
 
 // Initialize app and connect DB
@@ -58,7 +60,7 @@ app.use('/api/candidates', candidateRoutes);
 app.use('/api/election', electionRoutes);
 app.use('/api/results', resultsRoutes);
 app.use('/api/prediction', predictionRoutes);
-app.use('/api/voters', voterRoutes);
+app.use('/api/voters', VoterRoutes);
 app.use('/api/votes', VoteRoutes);
 
 // 404 handler

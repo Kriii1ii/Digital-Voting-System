@@ -1,4 +1,3 @@
-// backend/routes/voter.js
 import express from 'express';
 import Voter from '../models/Voter.js';
 import User from '../models/User.js';

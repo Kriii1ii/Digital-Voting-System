@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import { io } from '../server.js';
 import Vote from '../models/Vote.js';
 import Election from '../models/Election.js';
-import Candidate from '../models/Candidate.js'; // ✅ fix case
+import Candidate from '../models/Candidate.js'; 
 
 // Build a rich tally with zero-vote candidates too
 async function computeTally(electionId) {

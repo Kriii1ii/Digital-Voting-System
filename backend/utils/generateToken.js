@@ -1,4 +1,3 @@
-// utils/generateToken.js
 import jwt from 'jsonwebtoken';
 
 /**
