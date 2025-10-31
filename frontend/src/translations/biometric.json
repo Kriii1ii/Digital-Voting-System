@@ -1,0 +1,14 @@
+{
+  "en": {
+    "chooseBiometricMethod": "Choose Your Biometric Authentication Method",
+    "next": "Next",
+    "backToForm": "Back to Form",
+    "biometricRegistration": "Biometric Registration"
+  },
+  "np": {
+    "chooseBiometricMethod": "बायोमेट्रिक प्रमाणीकरण विधि छनौट गर्नुहोस्",
+    "next": "अर्को",
+    "backToForm": "फर्म मा फर्कनुहोस्",
+    "biometricRegistration": "बायोमेट्रिक दर्ता"
+  }
+}

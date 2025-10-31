@@ -13,6 +13,7 @@ const translations = {
     registration: "Voter Registration",
     registrationSubtitle: "Register to participate in elections",
     personalInfo: "Personal Information",
+    biometricRegistration: "Biometric Registration",
     fullName: "Full Name",
     fullNamePlaceholder: "Enter your full name",
     dateOfBirth: "Date of Birth",

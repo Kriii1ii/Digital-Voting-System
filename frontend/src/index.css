@@ -14,3 +14,92 @@
   border-color: #3b82f6; /* blue-500 */
   box-shadow: 0 0 0 1px #3b82f6;
 }
+
+.option-card.selected {
+  border: 2px solid #2563eb;
+  box-shadow: 0 0 8px rgba(37, 99, 235, 0.4);
+}
+
+:root {
+  /* New neutral palette requested by user */
+  --color-bg: #DEE2E6; /* light neutral background */
+  --color-dark: #212529; /* primary text (dark) */
+  --color-muted-2: #6C757C; /* secondary / muted */
+  --color-3: #DEE2E6; /* light neutral */
+  --color-accent: #6C757C; /* accent */
+  --color-strong: #212529;
+  --color-muted: rgba(33,37,41,0.06);
+  --color-blackish: #000000;
+
+  /* Minimal UI tokens */
+  --panel-radius: 12px;
+  --control-radius: 8px;
+  --shadow-soft: 0 6px 18px rgba(15,27,39,0.04);
+}
+
+body {
+  font-family: 'Open Sans', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  background: var(--color-bg);
+  color: var(--color-dark);
+}
+
+.biometric-panel {
+  background: #ffffff;
+  border: 1px solid var(--color-3);
+  border-radius: var(--panel-radius);
+  padding: 1rem;
+  box-shadow: var(--shadow-soft);
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.pose-circle {
+  display: none; /* removed: use centered dotted square instead */
+}
+
+.pose-circle-centered {
+  display: none;
+}
+
+.pose-hint {
+  color: var(--color-dark);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.biometric-panel p,
+.biometric-panel .text-sm,
+.biometric-panel .text-xs {
+  line-height: 1.6;
+  margin-bottom: 0.6rem;
+}
+
+  /* dotted inner square for face positioning */
+  .face-inner-box {
+    width: 46%;
+    height: 56%;
+    border: 2px dashed var(--color-muted-2);
+    border-radius: 8px;
+    box-sizing: border-box;
+    pointer-events: none;
+    display: block;
+    margin: 0 auto;
+  }
+
+  /* buttons minimal */
+  .btn-minimal {
+    border-radius: var(--control-radius);
+    padding: 0.5rem 1rem;
+    background: transparent;
+    border: 1px solid var(--color-muted-2);
+    color: var(--color-dark);
+  }
+
+  .btn-primary {
+    background: var(--color-dark);
+    color: var(--color-3);
+    border: none;
+  }
+
+  .centered-row { display:flex; gap:0.75rem; align-items:center; justify-content:center }
+

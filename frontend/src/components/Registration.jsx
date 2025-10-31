@@ -4,6 +4,7 @@ import { ArrowLeft, User, Shield } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import NepaliDatePicker from '@sbmdkl/nepali-datepicker-reactjs';
 import '@sbmdkl/nepali-datepicker-reactjs/dist/index.css';
+import BiometricChoice from './biometric/BiometricChoice';
 
 const Registration = () => {
   const navigate = useNavigate();
@@ -24,6 +25,8 @@ const Registration = () => {
     ward: ''
   });
 
+  const [currentStep, setCurrentStep] = useState('form'); // 'form' | 'biometric'
+  const [biometricData, setBiometricData] = useState(null);
   const [formErrors, setFormErrors] = useState({});
 
   const handleInputChange = (e) => {
@@ -79,14 +82,47 @@ const Registration = () => {
     return errors;
   };
 
-  const handleSubmit = (e) => {
+  // REMOVED DUPLICATE LINE 85: const [biometricData, setBiometricData] = useState(null);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const errors = validateForm();
     setFormErrors(errors);
 
     if (Object.keys(errors).length === 0) {
-      console.log("Form submitted:", formData);
-      navigate("/login");
+      // If we're on the form step and validation passes, move to biometric step
+      if (currentStep === 'form') {
+        setCurrentStep('biometric');
+        return;
+      }
+
+      // If we're on the biometric step and have biometric data, proceed with registration
+      try {
+        // Send registration data to backend
+        const response = await fetch('http://localhost:3000/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...formData,
+            biometricData
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Registration failed');
+        }
+
+        const data = await response.json();
+        console.log("Registration successful:", data);
+        
+        // Redirect to login page
+        navigate("/login");
+      } catch (error) {
+        console.error("Registration error:", error);
+        setFormErrors({ submit: error.message });
+      }
     }
   };
 
@@ -117,9 +153,10 @@ const Registration = () => {
             <p className="text-gray-600">{t('registrationSubtitle')}</p>
           </div>
 
-          {/* Registration Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 mt-3">
+          {currentStep === 'form' ? (
+            /* Registration Form */
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 mt-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                 {/* Full Name */}
@@ -215,7 +252,7 @@ const Registration = () => {
                     {t("confirmPassword")} <span className="text-red-500">*</span>
                   </label>
                   <input
-                    type="confirmPassword"
+                    type="password"
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
@@ -353,6 +390,15 @@ const Registration = () => {
               </div>
             </div>
 
+            {/* Biometric Registration */}
+            <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 mb-6">
+              <h3 className="text-lg font-semibold mb-4">{t('biometricRegistration')}</h3>
+              <BiometricChoice mode="registration" onCompletion={(data) => {
+                console.log('Biometric registration completed:', data);
+                // You can handle the biometric data here
+              }} />
+            </div>
+
             {/* Submit Button */}
             <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
               <button
@@ -360,22 +406,37 @@ const Registration = () => {
                 className="w-full bg-blue-800 text-white py-4 px-6 rounded-xl font-semibold hover:scale-[1.02] hover:shadow-lg flex items-center justify-center space-x-2"
               >
                 <Shield className="w-5 h-5" />
-                <span>{t('register')}</span>
+                <span>{t('next')}</span>
               </button>
-
-              {/* Already registered */}
-              <p className="text-center text-gray-600 text-sm mt-4 font-bold">
-                {t('alreadyRegistered')} <br />
-                <button
-                  type="button"
-                  onClick={() => navigate('/login')}
-                  className="w-32 bg-blue-800 text-white py-2 px-4 mt-3 rounded-xl font-semibold hover:scale-[1.02] hover:shadow-lg"
-                >
-                  {t("login")}
-                </button>
-              </p>
             </div>
           </form>
+          ) : (
+            /* Biometric Registration Step */
+            <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+              <h2 className="text-xl font-semibold mb-4">{t('chooseBiometricMethod')}</h2>
+              <BiometricChoice 
+                mode="registration" 
+                onCompletion={(data) => {
+                  setBiometricData(data);
+                  handleSubmit({ preventDefault: () => {} });
+                }}
+              />
+            </div>
+          )}
+
+          {/* Already registered - shown on both steps */}
+          <div className="mt-6 text-center">
+            <p className="text-gray-600 text-sm font-bold">
+              {t('alreadyRegistered')} <br />
+              <button
+                type="button"
+                onClick={() => navigate('/login')}
+                className="w-32 bg-blue-800 text-white py-2 px-4 mt-3 rounded-xl font-semibold hover:scale-[1.02] hover:shadow-lg"
+              >
+                {t("login")}
+              </button>
+            </p>
+          </div>
         </div>
       </div>
     </div>
