@@ -224,9 +224,15 @@ class FaceService:
             0.2 * quality_metrics['face_size']
         )
         
-        # Check quality thresholds
-        if not self._check_quality_thresholds(quality_metrics):
-            return None, {**quality_metrics, "error": "Image quality too low"}
+        # Validate using ImageUtils: only block if occluded/mask or very low light
+        try:
+            validation_result = ImageUtils.validate_face_image(image, face_locations[0])
+        except Exception as e:
+            return None, {**quality_metrics, "error": f"Validation failed: {str(e)}"}
+
+        if not validation_result.get('valid', False):
+            # Return helpful flags for the caller (occluded, low_light, reason)
+            return None, {**quality_metrics, **validation_result, "error": "Validation failed"}
             
         # Get face encoding
         face_encodings = face_recognition.face_encodings(image, face_locations)

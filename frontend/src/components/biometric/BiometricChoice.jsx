@@ -232,16 +232,16 @@ const BiometricChoice = ({ userId, onCompletion, mode = 'registration' }) => {
             }}
           >
             <div style={{ flex: 1 }}>
-              <h3 className="text-2xl font-semibold mb-2" style={{ color: '#111827', margin: 0, lineHeight: 1.05 }}>Face<br/>Recognition</h3>
-              <p style={{ color: '#111827', opacity: 0.8, marginTop: 12, maxWidth: 300 }}>Use your webcam to capture a live image</p>
+              <h3 className="text-2xl font-semibold mb-2" style={{ color: '#111827', margin: 0, lineHeight: 1.05 }}>Face Validation</h3>
+              <p style={{ color: '#111827', opacity: 0.8, marginTop: 12, maxWidth: 300 }}>Use your webcam for your face validation process.</p>
             </div>
             <div style={{ width: '100%', display: 'flex', justifyContent: 'center', marginTop: 18 }}>
               <button
                 onClick={() => setSelectedOption('face')}
                 className="rounded-full transition-colors"
-                style={{ background: 'var(--color-accent)', color: 'var(--color-dark)', fontWeight: 700, padding: '12px 40px', borderRadius: 18, boxShadow: '0 8px 20px rgba(16,24,40,0.12)' }}
+                style={{ background: 'var(--color-accent)', color: 'var(--color-dark)', fontWeight: 700, padding: '12px 40px', borderRadius: 18, boxShadow: '0 8px 20px rgba(180, 152, 199, 0.12)' }}
               >
-                Choose Face
+                Click
               </button>
             </div>
           </div>

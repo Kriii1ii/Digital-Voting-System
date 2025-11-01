@@ -1,4 +1,4 @@
-cd biometric-service
+#cd biometric-service
 
 # Create the complete FastAPI mock service
 cat > mock_main.py << 'EOF'
@@ -37,27 +37,20 @@ class FaceRegistrationRequest(BaseModel):
     user_id: str
     image_data: str
 
-class FingerprintRegistrationRequest(BaseModel):
-    user_id: str
-    sensor_data: dict
-
-# Mock storage
+# Mock storage (face-only)
 face_encodings = {}
-fingerprint_templates = {}
 
 @app.get("/")
 async def root():
     return {
         "message": "Mock Biometric Service", 
-        "endpoints": [
-            "/api/health", 
-            "/api/face/register", 
-            "/api/face/verify", 
-            "/api/fingerprint/register", 
-            "/api/fingerprint/verify",
-            "/docs",
-            "/redoc"
-        ]
+            "endpoints": [
+                "/api/health", 
+                "/api/face/register", 
+                "/api/face/verify",
+                "/docs",
+                "/redoc"
+            ]
     }
 
 @app.get("/api/health")
@@ -68,9 +61,7 @@ async def health_check():
         "timestamp": datetime.now().isoformat(),
         "endpoints": {
             "face_register": "/api/face/register",
-            "face_verify": "/api/face/verify", 
-            "fingerprint_register": "/api/fingerprint/register",
-            "fingerprint_verify": "/api/fingerprint/verify"
+            "face_verify": "/api/face/verify"
         }
     }
 
@@ -151,84 +142,13 @@ async def verify_face(request: FaceRegistrationRequest):
         print(f"❌ Face verification error: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
-@app.post("/api/fingerprint/register", response_model=BiometricResponse)
-async def register_fingerprint(request: FingerprintRegistrationRequest):
-    """Mock fingerprint registration"""
-    try:
-        print(f"🔍 Fingerprint registration for user: {request.user_id}")
-        
-        quality_score = round(random.uniform(0.75, 0.98), 2)
-        template_id = str(uuid.uuid4())
-        
-        fingerprint_templates[request.user_id] = {
-            "template_id": template_id,
-            "template": {"minutiae_count": random.randint(30, 45)},
-            "quality_score": quality_score,
-            "sensor_type": request.sensor_data.get("sensor_type", "simulated"),
-            "registered_at": datetime.now().isoformat()
-        }
-        
-        response_data = {
-            "user_id": request.user_id,
-            "template_id": template_id,
-            "sensor_type": request.sensor_data.get("sensor_type", "simulated"),
-            "quality_score": quality_score,
-            "minutiae_count": random.randint(30, 45),
-            "template_size": 256
-        }
-        
-        print(f"✅ Fingerprint registered: {response_data}")
-        
-        return BiometricResponse(
-            success=True,
-            data=response_data,
-            message="Fingerprint registered successfully"
-        )
-    except Exception as e:
-        print(f"❌ Fingerprint registration error: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
-
-@app.post("/api/fingerprint/verify", response_model=BiometricResponse)
-async def verify_fingerprint(request: FingerprintRegistrationRequest):
-    """Mock fingerprint verification"""
-    try:
-        print(f"🔍 Fingerprint verification for user: {request.user_id}")
-        
-        if request.user_id not in fingerprint_templates:
-            return BiometricResponse(
-                success=False,
-                data={"verified": False, "confidence": 0.0},
-                message="User fingerprint not registered"
-            )
-        
-        verified = random.random() > 0.1  # 90% success rate
-        confidence = round(random.uniform(0.75, 0.99), 2) if verified else round(random.uniform(0.4, 0.6), 2)
-        
-        response_data = {
-            "verified": verified,
-            "confidence": confidence,
-            "sensor_type": request.sensor_data.get("sensor_type", "simulated"),
-            "quality": round(random.uniform(0.8, 0.95), 2),
-            "user_id": request.user_id
-        }
-        
-        print(f"✅ Fingerprint verification: {response_data}")
-        
-        return BiometricResponse(
-            success=verified,
-            data=response_data,
-            message="Fingerprint verification successful" if verified else "Fingerprint verification failed"
-        )
-    except Exception as e:
-        print(f"❌ Fingerprint verification error: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+# Fingerprint endpoints removed from mock service — face-only mock.
 
 @app.get("/api/stats")
 async def get_stats():
     """Get mock service statistics"""
     return {
         "face_registrations": len(face_encodings),
-        "fingerprint_registrations": len(fingerprint_templates),
         "service_uptime": "mock",
         "timestamp": datetime.now().isoformat()
     }
@@ -237,8 +157,7 @@ async def get_stats():
 async def reset_data():
     """Reset all mock data"""
     face_encodings.clear()
-    fingerprint_templates.clear()
-    return {"message": "All mock data reset", "face_count": 0, "fingerprint_count": 0}
+    return {"message": "All mock data reset", "face_count": 0}
 
 if __name__ == "__main__":
     import uvicorn
@@ -247,8 +166,7 @@ if __name__ == "__main__":
     print("   GET  /api/health")
     print("   POST /api/face/register")
     print("   POST /api/face/verify") 
-    print("   POST /api/fingerprint/register")
-    print("   POST /api/fingerprint/verify")
+    # fingerprint endpoints removed from mock
     print("   GET  /api/stats")
     print("   GET  /api/reset")
     print("📚 API Documentation: http://localhost:8000/docs")

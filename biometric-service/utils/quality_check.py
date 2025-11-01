@@ -22,13 +22,16 @@ def strict_quality_check(image: np.ndarray) -> dict:
         landmarks_list = face_recognition.face_landmarks(rgb_image, [face_locations[0]])
         landmarks = landmarks_list[0] if landmarks_list else None
 
-        # lighting
-        lighting = ImageUtils.analyze_lighting_conditions(face_image)
-        proper_lighting = (lighting['brightness'] >= 50 and lighting['brightness'] <= 200 and lighting['contrast'] >= 20)
+    # lighting
+    # Relaxed thresholds to accept normal indoor lighting
+    lighting = ImageUtils.analyze_lighting_conditions(face_image)
+    # brightness in [0-255], contrast approx [0-255]
+    proper_lighting = (lighting.get('brightness', 0) >= 30 and lighting.get('brightness', 255) <= 220 and lighting.get('contrast', 0) >= 10)
 
         # detect mouth/nose visibility (simple heuristics)
-        no_obstructions = True
-        if landmarks and 'nose_tip' in landmarks and 'top_lip' in landmarks and 'bottom_lip' in landmarks:
+    no_obstructions = True
+    # If landmarks are present, perform mouth/obstruction check; if missing, be permissive (assume no obstruction)
+    if landmarks and 'nose_tip' in landmarks and 'top_lip' in landmarks and 'bottom_lip' in landmarks:
             # compute mouth area brightness/variance
             lip_pts = landmarks['top_lip'] + landmarks['bottom_lip']
             xs = [p[0] for p in lip_pts]
@@ -44,12 +47,13 @@ def strict_quality_check(image: np.ndarray) -> dict:
                 if mean_mouth < 40 or std_mouth < 10:
                     no_obstructions = False
         else:
-            # if landmarks missing, be conservative
-            no_obstructions = False
+            # landmarks missing: do not fail enrollment for this alone — mark as unknown but allow
+            no_obstructions = True
+            landmarks_missing = True
 
-        # detect sunglasses / eyewear (eyes region too dark or low variance)
-        no_glasses = True
-        if landmarks and 'left_eye' in landmarks and 'right_eye' in landmarks:
+    # detect dark sunglasses / heavy eyewear — only reject if eyes regions are very dark
+    no_glasses = True
+    if landmarks and 'left_eye' in landmarks and 'right_eye' in landmarks:
             def region_stats(pts):
                 xs = [p[0] for p in pts]
                 ys = [p[1] for p in pts]
@@ -62,15 +66,17 @@ def strict_quality_check(image: np.ndarray) -> dict:
 
             le = region_stats(landmarks['left_eye'])
             re = region_stats(landmarks['right_eye'])
-            # sunglasses often produce very dark eye regions
-            if le['mean'] < 40 and re['mean'] < 40:
+            # sunglasses often produce very dark eye regions — tighten to only catch very dark lenses
+            if le['mean'] < 25 and re['mean'] < 25 and le['std'] < 15 and re['std'] < 15:
                 no_glasses = False
         else:
-            no_glasses = False
+            # landmarks missing: assume eyewear is acceptable (allow prescription glasses)
+            no_glasses = True
 
         # neutral expression check: mouth openness / smile heuristics
-        neutral_expression = True
-        if landmarks and 'top_lip' in landmarks and 'bottom_lip' in landmarks:
+    neutral_expression = True
+    # Allow slight expressions / natural smiles — only fail for very large mouth openness
+    if landmarks and 'top_lip' in landmarks and 'bottom_lip' in landmarks:
             import numpy as _np
             top_lip = _np.mean(landmarks['top_lip'], axis=0)
             bottom_lip = _np.mean(landmarks['bottom_lip'], axis=0)
@@ -80,15 +86,16 @@ def strict_quality_check(image: np.ndarray) -> dict:
             xs = [p[0] for p in mouth_pts]
             mouth_width = max(xs) - min(xs) if xs else 1.0
             openness = mouth_height / (mouth_width + 1e-6)
-            # if mouth is wide open or very smiling (openness high) -> not neutral
-            if openness > 0.25:
+            # if mouth is very wide open (e.g., shouting) -> fail; allow slight smiles by raising threshold
+            if openness > 0.40:
                 neutral_expression = False
         else:
             neutral_expression = False
 
         # forward facing: check symmetry of eyes relative to nose
-        forward_angle = True
-        if landmarks and 'nose_tip' in landmarks and 'left_eye' in landmarks and 'right_eye' in landmarks:
+    forward_angle = True
+    # Allow modest head turns (~15-20 degrees). Use a more permissive symmetry diff threshold.
+    if landmarks and 'nose_tip' in landmarks and 'left_eye' in landmarks and 'right_eye' in landmarks:
             nose = np.mean(landmarks['nose_tip'], axis=0)
             left_eye = np.mean(landmarks['left_eye'], axis=0)
             right_eye = np.mean(landmarks['right_eye'], axis=0)
@@ -98,7 +105,8 @@ def strict_quality_check(image: np.ndarray) -> dict:
                 forward_angle = False
             else:
                 diff = abs(d_left - d_right) / max(d_left, d_right)
-                if diff > 0.28:
+                # Accept larger diffs to accommodate modest head turns
+                if diff > 0.55:
                     forward_angle = False
         else:
             forward_angle = False
@@ -114,13 +122,26 @@ def strict_quality_check(image: np.ndarray) -> dict:
             'lighting': lighting
         }
 
-        approved = all([
+        # If landmarks were missing we intentionally avoid failing the user for that alone.
+        # Construct approval by treating any None/unknown as permissive.
+        approval_checks = [
             validations['no_obstructions'],
             validations['neutral_expression'],
             validations['proper_lighting'],
             validations['no_glasses'],
             validations['forward_facing']
-        ])
+        ]
+
+        approved = True
+        for chk in approval_checks:
+            # If any check is explicitly False, fail. If True or truthy, continue. If unknown/None, treat as pass.
+            if chk is False:
+                approved = False
+                break
+
+        # Add helpful hint when landmarks were missing
+        if 'landmarks_missing' in locals() and landmarks_missing:
+            validations['landmarks_missing'] = True
 
         return {
             'approved': bool(approved),

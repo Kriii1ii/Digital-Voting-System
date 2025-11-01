@@ -449,7 +449,7 @@ const LiveFaceCapture = ({ onCapture, onError, qualityThreshold = 0.75 }) => {
       {/* Short checklist for users */}
       <div className="biometric-checklist w-full max-w-md p-3 mb-4 rounded-md" style={{ background: 'var(--color-bg)', border: '1px solid var(--color-muted)' }}>
         <ol style={{ paddingLeft: '1.1rem', margin: 0 }}>
-          <div style={{ color: '#000000ffff', alignItems: 'center', fontWeight: 700, fontSize: 16 }}>RULES:</div>
+          <h2 style={{ color: 'var(--color-dark)', margin: 0, fontSize: 28, fontWeight: 800 }}>Guidelines:</h2> <br></br>
           <li style={{ marginBottom: '0.6rem' }}><strong>1)</strong> Remove any mask or face covering.</li>
           <li style={{ marginBottom: '0.6rem' }}><strong>2)</strong> Position your face in the centered box on the camera preview — keep eyes visible.</li>
           <li style={{ marginBottom: '0.6rem' }}><strong>3)</strong> Look straight at the camera, no sunglasses or hats, neutral expression (do not show teeth).</li>
@@ -589,20 +589,19 @@ const LiveFaceCapture = ({ onCapture, onError, qualityThreshold = 0.75 }) => {
         )}
         {/* Quality metrics and consent */}
           {/* Compact requirements/status panel (removed large live-quality box) */}
-          <div className="w-full max-w-md mt-4 p-4 rounded-lg shadow-md" style={{ background: '#ffe6f0', border: '1px solid #ffd1e3' }}>
-            <div className="mb-2 flex justify-between items-center">
-              <div style={{ color: '#7a2d3a', fontWeight: 700, fontSize: 16 }}>Capture requirements</div>
-              <div className="text-xs" style={{ color: '#7a2d3a', opacity: 0.8 }}>{validationMessage}</div>
+          <div className="w-full max-w-md mt-4 p-4 rounded-lg shadow-md" style={{ background: '#FADADD', border: '1px solid rgba(0,0,0,0.04)' }}>
+            <div className="mb-2">
+              <div style={{ color: '#9b3740', fontWeight: 700, fontSize: 16 }}>Consent</div>
+              <div className="text-xs" style={{ color: '#9b3740', opacity: 0.9 }}>{validationMessage}</div>
             </div>
 
-            {/* Only keep consent checkbox per design request */}
-            <div className="text-sm mt-3">
-              <label style={{ color: '#7a2d3a', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div className="text-sm mt-1">
+              <label style={{ color: '#5f1f23', display: 'flex', alignItems: 'center', gap: 8 }}>
                 <input type="checkbox" checked={consentGiven} onChange={(e) => setConsentGiven(e.target.checked)} style={{ marginRight: 8 }} />
                 I consent to processing and storing my biometric template (required to register)
               </label>
             </div>
-            {faceQualityStatus && <div className="text-sm mt-3" style={{ color: '#7a2d3a' }}>{faceQualityStatus}</div>}
+            {faceQualityStatus && <div className="text-sm mt-3" style={{ color: '#5f1f23' }}>{faceQualityStatus}</div>}
           </div>
 
           {/* Submit area below the requirements box */}

@@ -406,7 +406,7 @@ const Registration = () => {
                 className="w-full bg-blue-800 text-white py-4 px-6 rounded-xl font-semibold hover:scale-[1.02] hover:shadow-lg flex items-center justify-center space-x-2"
               >
                 <Shield className="w-5 h-5" />
-                <span>{t('next')}</span>
+                <span>{t('Submit')}</span>
               </button>
             </div>
           </form>

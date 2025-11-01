@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import base64
+import face_recognition
 from typing import Tuple, Dict, Any, Optional
 import io
 from PIL import Image, ImageEnhance
@@ -150,29 +151,50 @@ class ImageUtils:
             image_area = image.shape[0] * image.shape[1]
             face_area = (right - left) * (bottom - top)
             size_ratio = face_area / image_area
-            
-            # Check if face is too small
-            if size_ratio < 0.05:  # Face should be at least 5% of image
-                return {"valid": False, "reason": "Face too small"}
-            
-            # Check lighting conditions
+
+            # Basic size check: ensure face isn't tiny
+            if size_ratio < 0.03:  # Face should be at least ~3% of image
+                return {"valid": False, "reason": "Face too small", "face_area": face_area, "size_ratio": float(size_ratio)}
+
+            # Check lighting conditions (brightness in 0-255)
             lighting = ImageUtils.analyze_lighting_conditions(face_image)
-            
-            # Quality checks
-            valid = (
-                lighting["brightness"] > 50 and 
-                lighting["brightness"] < 200 and
-                lighting["sharpness"] > 50 and
-                size_ratio > 0.05 and
-                size_ratio < 0.8  # Face shouldn't be too large either
-            )
-            
+            brightness = lighting.get("brightness", 0.0)
+            low_light = brightness < 40  # very dim room
+
+            # Detect basic occlusion/mask via landmarks: if essential landmarks (nose, eyes, lips) are missing,
+            # assume occlusion (hand/mask covering important facial features).
+            try:
+                landmarks = face_recognition.face_landmarks(face_image)
+                occluded = False
+                if not landmarks or len(landmarks) == 0:
+                    occluded = True
+                else:
+                    lm = landmarks[0]
+                    # Require eyes and nose as minimal evidence of an uncovered face
+                    required = ['left_eye', 'right_eye', 'nose_tip']
+                    for r in required:
+                        if r not in lm or not lm[r]:
+                            occluded = True
+                            break
+                    # If lips are missing or very small, it may be a mask
+                    if not occluded:
+                        mouth_pts = lm.get('top_lip', []) + lm.get('bottom_lip', [])
+                        if len(mouth_pts) < 6:
+                            occluded = True
+            except Exception:
+                # If landmark detection fails, be conservative and assume occlusion if brightness is low
+                occluded = False
+
+            valid = (not occluded) and (not low_light)
+
             return {
-                "valid": valid,
+                "valid": bool(valid),
                 "lighting": lighting,
+                "low_light": bool(low_light),
+                "occluded": bool(occluded),
                 "size_ratio": float(size_ratio),
-                "face_area": face_area,
-                "reason": "Good quality" if valid else "Poor image quality"
+                "face_area": int(face_area),
+                "reason": "Good quality" if valid else ("occluded" if occluded else "low_light" if low_light else "poor_quality")
             }
             
         except Exception as e:

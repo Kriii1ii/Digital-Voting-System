@@ -9,6 +9,7 @@ import json
 import logging
 from services.face_service import FaceService
 from utils.quality_check import strict_quality_check
+from utils.image_utils import ImageUtils
 
 # ------------------------------------------------------
 # MODELS
@@ -108,9 +109,17 @@ async def validate_face(request: FaceValidationRequest):
 async def face_quality_check(request: FaceValidationRequest):
     """Strict quality check for enrollment. Returns approved boolean and detailed flags."""
     try:
-        image_data = base64.b64decode(request.image.split(',')[1])
-        nparr = np.frombuffer(image_data, np.uint8)
-        image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        # Use ImageUtils to robustly decode base64 data URLs or raw base64
+        try:
+            image = ImageUtils.base64_to_image(request.image)
+        except Exception:
+            # Fallback: try older manual decode path (legacy callers may send bare base64)
+            try:
+                image_data = base64.b64decode(request.image.split(',')[1])
+                nparr = np.frombuffer(image_data, np.uint8)
+                image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            except Exception:
+                image = None
 
         if image is None:
             return { 'approved': False, 'message': 'Invalid image data', 'details': { 'face_detected': False } }
@@ -121,6 +130,13 @@ async def face_quality_check(request: FaceValidationRequest):
     except Exception as e:
         logger.error(f"Strict quality check error: {e}")
         return { 'approved': False, 'message': str(e), 'details': {} }
+
+
+# Alias route kept for backwards compatibility (some callers use /api/biometrics/...)
+@app.post("/api/biometrics/face/quality-check")
+async def face_quality_check_alias(request: FaceValidationRequest):
+    """Alias endpoint that delegates to the strict quality check handler."""
+    return await face_quality_check(request)
 
 # ------------------------------------------------------
 # FACE REGISTRATION
@@ -217,5 +233,7 @@ async def root_info():
 # ------------------------------------------------------
 if __name__ == "__main__":
     import uvicorn
-    logger.info("🚀 Starting Biometric Service on port 8000...")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # Run biometric service on 8000 by default (backend proxies to this URL)
+    PORT = 8000
+    logger.info(f"🚀 Starting Biometric Service on port {PORT}...")
+    uvicorn.run(app, host="0.0.0.0", port=PORT)
