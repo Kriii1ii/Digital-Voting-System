@@ -255,3 +255,14 @@ export const getVoters = async () => {
   }
 };
 
+// Delete a voter by ID
+export const deleteVoter = async (id) => {
+  try {
+    const response = await api.delete(`/voters/${id}`); // matches your backend DELETE /voters/:id
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting voter:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
