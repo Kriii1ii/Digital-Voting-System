@@ -1,4 +1,6 @@
 import React, { useState, createContext, useContext, useEffect } from "react";
+import BiometricChoice from "../components/biometric/BiometricChoice";
+import LivePoll from "../components/LivePoll";
 import { useNavigate } from "react-router-dom";
 import { Camera, LogOut, User, CheckCircle } from "lucide-react";
 import { getPosts, getCandidates, addVoter, getVoterById } from "../api/endpoints"; // ✅ API imports
@@ -222,6 +224,9 @@ const FeedPage = () => {
 
   return (
     <div className="max-w-2xl mx-auto mt-28 px-4">
+      {/* Live poll preview for voters */}
+      <LivePoll />
+
       {posts.map((post) => (
         <PostCard key={post.id} post={post} onReact={handleReact} onComment={handleComment} user={user} />
       ))}
@@ -323,6 +328,10 @@ const VoteNowPage = () => {
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [voted, setVoted] = useState(false);
   const [candidates, setCandidates] = useState([]);
+    const [pendingCandidate, setPendingCandidate] = useState(null);
+    const [showVerifier, setShowVerifier] = useState(false);
+    const [verifLoading, setVerifLoading] = useState(false);
+    const [verifError, setVerifError] = useState(null);
 
   useEffect(() => {
     const fetchCandidates = async () => {
@@ -337,12 +346,29 @@ const VoteNowPage = () => {
   }, []);
 
   const handleVote = async (candidate) => {
+    // Open biometric verifier before casting the vote
+    setPendingCandidate(candidate);
+    setVerifError(null);
+    setShowVerifier(true);
+  };
+
+  const onVerificationComplete = async (responseData) => {
+    // Called after BiometricChoice returns a successful verification
     try {
-      await addVoter({ userId: user.id, candidateId: candidate.id });
-      setSelectedCandidate(candidate);
+      setVerifLoading(true);
+      setShowVerifier(false);
+      if (!pendingCandidate) throw new Error('No candidate selected for vote');
+      const effectiveUserId = (user && (user._id || user.id || user.voterId)) || localStorage.getItem('voterId');
+      await addVoter({ userId: effectiveUserId, candidateId: pendingCandidate.id });
+      setSelectedCandidate(pendingCandidate);
       setVoted(true);
+      setPendingCandidate(null);
     } catch (err) {
-      console.error("Voting failed:", err);
+      console.error('Voting failed after verification:', err);
+      setVerifError(err.response?.data?.message || err.message || 'Vote failed.');
+      // keep modal closed; let user retry voting
+    } finally {
+      setVerifLoading(false);
     }
   };
 
@@ -380,6 +406,24 @@ const VoteNowPage = () => {
               </div>
             ))}
           </div>
+          {/* Biometric verification modal (shown when voter attempts to cast a vote) */}
+          {showVerifier && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+              <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Face verification required</h3>
+                  <button onClick={() => { setShowVerifier(false); setPendingCandidate(null); }} className="text-sm text-gray-600">Cancel</button>
+                </div>
+                <p className="text-sm text-gray-600 mb-4">Please verify your identity to submit this vote.</p>
+                <BiometricChoice
+                  userId={(user && (user._id || user.id || user.voterId)) || localStorage.getItem('voterId')}
+                  mode="verification"
+                  onCompletion={(data) => onVerificationComplete(data)}
+                />
+                {verifError && <div className="mt-3 text-sm text-red-600">{verifError}</div>}
+              </div>
+            </div>
+          )}
         </>
       ) : (<div className="text-center bg-white p-10 rounded-xl shadow-lg">
           <CheckCircle size={48} className="text-green-600 mx-auto mb-3 animate-bounce" />

@@ -135,6 +135,18 @@ export const getElections = async () => {
   }
 };
 
+// Fetch prediction results from backend AI service for a given election
+export const getPrediction = async (electionId) => {
+  try {
+    // Use public prediction endpoint so LivePoll can poll without admin auth
+    const response = await api.get(`/prediction/public/${electionId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch prediction:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
 export const getVotes = async () => {
   try {
     const response = await api.get("/votes"); // adjust endpoint if needed

@@ -39,9 +39,20 @@ export const registerUser = async (req, res) => {
     voter.hasRegistered = true;
     await voter.save();
 
+    // Return created user id to allow frontend to associate biometric upload
     res.status(201).json({
       success: true,
       message: 'Registration successful! Please login to continue.',
+      data: {
+        id: user._id,
+        user: {
+          _id: user._id,
+          email: user.email,
+          voterId: user.voterId,
+          fullName: user.fullName,
+          role: user.role
+        }
+      }
     });
   } catch (err) {
     res.status(500).json({

@@ -1,6 +1,4 @@
 const mongoose = require('mongoose');
-const { protect, adminOnly } = require('../middleware/authMiddleware.js');
-const { createElection, getElections } = require('../controllers/electionController.js');
 
 const candidateSchema = new mongoose.Schema({
   name: { type: String, required: true },

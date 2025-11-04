@@ -55,6 +55,71 @@ const userSchema = new mongoose.Schema(
       alias: 'verified',
       index: true,
     },
+
+    // --- Biometric fields merged from biometric module ---
+    // New biometric fields
+    biometricRegistered: {
+      type: Boolean,
+      default: false
+    },
+    biometricType: {
+      type: String,
+      enum: ['face', 'webauthn', null],
+      default: null
+    },
+    biometricRegistrationDate: {
+      type: Date,
+      default: null
+    },
+
+    // Detailed biometric auth metadata (per user's requested layout)
+    biometricAuth: {
+      faceEnrolled: { type: Boolean, default: false },
+      // fingerprint removed — face-only
+      lastBiometricUpdate: { type: Date },
+      enrollmentStatus: {
+        type: String,
+        enum: ['pending', 'completed', 'failed'],
+        default: 'pending'
+      }
+    },
+
+    // Face enrollment validation flags and score
+    faceEnrollment: {
+      qualityScore: { type: Number, default: null },
+      validationFlags: {
+        noObstructions: { type: Boolean, default: false },
+        neutralExpression: { type: Boolean, default: false },
+        properLighting: { type: Boolean, default: false },
+        forwardFacing: { type: Boolean, default: false },
+        noGlasses: { type: Boolean, default: false }
+      },
+      enrolledAt: { type: Date, default: null }
+    },
+
+    // Audit trail for biometric operations
+    biometricAudit: [{
+      action: { type: String, enum: ['enrollment','verification','update','deletion'] },
+      timestamp: { type: Date, default: Date.now },
+      method: { type: String, enum: ['face','webauthn'] },
+      success: { type: Boolean },
+      confidenceScore: { type: Number, default: null },
+      deviceInfo: { type: String, default: null },
+      ipAddress: { type: String, default: null }
+    }],
+
+    // Consent management for biometric data
+    consent: {
+      biometricConsent: { type: Boolean, default: false },
+      consentDate: { type: Date, default: null },
+      consentVersion: { type: String, default: null },
+      dataRetention: {
+        agreed: { type: Boolean, default: false },
+        durationMonths: { type: Number, default: 0 },
+        autoDelete: { type: Boolean, default: true }
+      }
+    }
+
   },
   {
     timestamps: true,

@@ -1,0 +1,37 @@
+.lp-card {
+  background: linear-gradient(180deg, #fff 0%, #fbfdff 100%);
+  border: 1px solid rgba(2,6,23,0.06);
+  box-shadow: 0 6px 20px rgba(2,6,23,0.06);
+  border-radius: 12px;
+  padding: 14px;
+  max-width: 840px;
+  margin: 0 auto 24px;
+}
+.lp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.lp-title { font-size: 1.05rem; font-weight: 700; color: #0f172a; }
+.lp-subtitle { font-size: 0.85rem; color: #475569; }
+.lp-question { width: 36px; height: 36px; border-radius: 8px; background: linear-gradient(90deg,#f59e0b,#f97316); color: white; display:flex; align-items:center; justify-content:center; font-weight:700; }
+.lp-body { margin-top: 12px; display:flex; flex-direction:column; gap:10px; }
+.lp-row { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px; border-radius:10px; background: linear-gradient(180deg, #ffffff, #fbfcff); }
+.lp-left { display:flex; align-items:center; gap:10px; }
+.lp-avatar { width:44px; height:44px; border-radius:9999px; object-fit:cover; border:2px solid #e6eef8; }
+.lp-meta { display:flex; flex-direction:column; }
+.lp-name { font-weight:600; color:#0b1220; }
+.lp-sub { font-size:0.8rem; color:#64748b; }
+.lp-winner-badge { margin-left:8px; background: linear-gradient(90deg,#06b6d4,#3b82f6); color:white; padding:4px 8px; border-radius:999px; font-size:0.75rem; font-weight:600; }
+.lp-right { display:flex; align-items:center; gap:12px; min-width:180px; }
+.lp-bar-wrap { flex:1; height:12px; background:#eef2ff; border-radius:999px; overflow:hidden; }
+.lp-bar { height:100%; background: linear-gradient(90deg,#34d399,#60a5fa); }
+.lp-score { min-width:40px; text-align:right; font-weight:700; color:#0b1220; }
+.lp-footer { margin-top:10px; font-size:0.8rem; color:#64748b; text-align:right; }
+.lp-loading, .lp-error, .lp-empty { padding:14px; color:#475569; }
+
+@media (max-width: 720px) {
+  .lp-card { padding: 12px; }
+  .lp-right { min-width: 120px; }
+}

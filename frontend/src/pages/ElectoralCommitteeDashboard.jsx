@@ -7,6 +7,7 @@ import {
   getElections,
   createElection,
 } from "../api/endpoints"; // make sure getElections is exported
+import LivePoll from "../components/LivePoll";
 
 const ElectoralCommitteeDashboard = () => {
   const [elections, setElections] = useState([]);
@@ -90,6 +91,9 @@ const ElectoralCommitteeDashboard = () => {
           <h1 className="text-3xl font-extrabold bg-gradient-to-r from-blue-900 to-blue-500 text-transparent bg-clip-text tracking-wide">
             Electoral Committee Dashboard
           </h1>
+        </div>
+        <div className="w-full max-w-5xl mx-auto mt-4">
+          <LivePoll />
         </div>
       </header>
 

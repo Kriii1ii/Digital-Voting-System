@@ -20,6 +20,7 @@ import {
   Legend,
 } from "chart.js";
 import { getAdminStats, getWinningCandidates } from "../api/endpoints";
+import LivePoll from "../components/LivePoll";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
@@ -184,6 +185,10 @@ const AdminDashboard = () => {
                 <h1 className="text-3xl font-bold text-slate-800 mb-6">
                   {t("dashboard")}
                 </h1>
+
+                <div className="max-w-4xl mx-auto mb-6">
+                  <LivePoll />
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
                   <div className="bg-green-700 text-white p-6 rounded-xl shadow-lg flex flex-col justify-between">

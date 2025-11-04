@@ -4,6 +4,7 @@ import { ArrowLeft, User, Shield } from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
 import NepaliDatePicker from "@sbmdkl/nepali-datepicker-reactjs";
 import "@sbmdkl/nepali-datepicker-reactjs/dist/index.css";
+import BiometricChoice from './biometric/BiometricChoice';
 import { registerUser } from "../api/endpoints";
 
 const Registration = () => {
@@ -28,6 +29,7 @@ const Registration = () => {
 
   const [formErrors, setFormErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [biometricData, setBiometricData] = useState(null);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -76,17 +78,39 @@ const Registration = () => {
     setFormErrors(errors);
 
     if (Object.keys(errors).length === 0) {
+      // Proceed with registration (biometricData may be null if user didn't capture)
       setLoading(true);
       try {
-        // ✅ Call backend API
-        const response = await registerUser(formData);
+        const response = await registerUser({ ...formData, biometricData });
         console.log("User registered successfully:", response);
 
-        alert(t("registrationSuccess") || "Registration successful!");
-        navigate("/login");
+          // If registration returned a user id and biometric data was provided, attempt to register the face(s)
+          try {
+            const userId = response?.data?.id || response?.data?._id || response?.id || null;
+            if (userId && biometricData) {
+              // prefer batch endpoint when multiple images provided
+              const API_BASE = import.meta.env.VITE_API_URL || '';
+              const images = Array.isArray(biometricData.data) ? biometricData.data : [biometricData.data];
+              // call biometric register-batch (best-effort, do not block overall registration)
+              await fetch(`${API_BASE}/api/biometrics/face/register-batch`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, images, consent: true }),
+              }).then(res => res.json()).then(r => {
+                if (!r || !r.success) console.warn('Biometric register-batch returned error', r);
+              }).catch(err => console.warn('Biometric register-batch failed', err));
+            }
+          } catch (bioErr) {
+            console.warn('Post-registration biometric upload failed (non-fatal):', bioErr);
+          }
+
+          alert(t("registrationSuccess") || "Registration successful!");
+          navigate("/login");
       } catch (error) {
         console.error("Registration failed:", error);
-        alert("Registration failed. Please try again.");
+          // Surface server message when available to help debugging / user feedback
+          const serverMessage = error.response?.data?.message || error.message || 'Registration failed. Please try again.';
+          alert(serverMessage);
       } finally {
         setLoading(false);
       }
@@ -122,7 +146,7 @@ const Registration = () => {
           </div>
 
           {/* Registration Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
             <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 mt-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
@@ -358,6 +382,17 @@ const Registration = () => {
               </div>
             </div>
 
+            {/* Biometric Registration (embedded) */}
+            <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 mb-6">
+              <h3 className="text-lg font-semibold mb-4">{t('Biometric Registration')}</h3>
+              <BiometricChoice
+                mode="registration"
+                onCompletion={(data) => {
+                  setBiometricData(data);
+                }}
+              />
+            </div>
+
             {/* Submit Button */}
             <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
               <button
@@ -380,7 +415,7 @@ const Registration = () => {
                 </button>
               </p>
             </div>
-          </form>
+            </form>
         </div>
       </div>
     </div>

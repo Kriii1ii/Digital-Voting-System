@@ -17,7 +17,7 @@ const connectDB = require('./config/db.js');
 // Events Emitter Configuration
 events.defaultMaxListeners = 20; // or 0 for unlimited, but 20 is safer
 
-// Routes
+// Routes (CommonJS requires)
 const electionRoutes = require('./routes/election.js');
 const resultsRoutes = require('./routes/results.js');
 const predictionRoutes = require('./routes/prediction.js');
@@ -25,6 +25,8 @@ const authRoutes = require('./routes/auth.js');
 const candidateRoutes = require('./routes/candidate.js');
 const VoterRoutes = require('./routes/voter.js');
 const VoteRoutes = require('./routes/vote.js');
+// Biometric routes (added during integration)
+const biometricRoutes = require('./routes/biometrics.js');
 
 
 dotenv.config();
@@ -32,12 +34,23 @@ dotenv.config();
 // Initialize app and connect DB
 const app = express();
 connectDB();
-app.use(
-    express.json({ limit: '10mb' }) // <--- KEEP THIS LINE (It correctly parses JSON and sets the body limit)
-);
+// Middleware
+app.use(express.json({ limit: '10mb' }));
+// Allow the frontend dev server origins (support both 5173 and 5174) and any FRONTEND_URL from env
+const FRONTEND_URLS = (process.env.FRONTEND_ORIGINS || 'http://localhost:5173,http://localhost:5174').split(',');
 app.use(
   cors({
-    origin: 'http://localhost:5173', // your frontend
+    origin: function (origin, callback) {
+      // allow requests with no origin (e.g., curl, mobile)
+      if (!origin) return callback(null, true);
+      if (FRONTEND_URLS.indexOf(origin) !== -1) {
+        return callback(null, true);
+      }
+      // allow explicitly configured FRONTEND_URL if provided
+      if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) return callback(null, true);
+      // otherwise reject CORS
+      return callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
   })
 );
@@ -70,6 +83,8 @@ app.use('/api/results', resultsRoutes);
 app.use('/api/prediction', predictionRoutes);
 app.use('/api/voters', VoterRoutes);
 app.use('/api/votes', VoteRoutes);
+// Biometric API mount
+app.use('/api/biometrics', biometricRoutes);
 
 // 404 handler
 app.use((req, res) => res.status(404).json({ message: 'Route not found' }));
@@ -84,7 +99,8 @@ app.use((err, req, res, next) => {
 });
 
 // Create server and attach socket.io
-const PORT = process.env.PORT || 5000;
+// Prefer an env override for PORT to avoid local service conflicts
+const PORT = process.env.PORT || 5001;
 const server = http.createServer(app);
 
 const io = new Server(server, {
@@ -93,7 +109,18 @@ const io = new Server(server, {
     credentials: true,
   },
 });
-module.exports = { io };
+
+// expose io on the express app for controllers to emit events without circular imports
+app.set('io', io);
+
+// initialize prediction watcher to emit updates on DB changes
+const initPredictionWatcher = require('./realtime/predictionWatcher.js');
+try {
+  // initPredictionWatcher may return a promise
+  initPredictionWatcher(io).catch?.((err) => console.error('Prediction watcher failed to start:', err));
+} catch (err) {
+  console.error('Could not initialize prediction watcher:', err);
+}
 // Socket.IO logic
 io.on('connection', (socket) => {
   console.log('New client connected:', socket.id);
