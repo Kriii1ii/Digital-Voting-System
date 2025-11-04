@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Outlet } from "react-router-dom";
 import { useLanguage } from "../contexts/LanguageContext";
 import {
@@ -19,6 +19,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { getAdminStats, getWinningCandidates } from "../api/endpoints";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
@@ -31,28 +32,37 @@ const menuItems = [
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const { t } = useLanguage(); 
-
+  const { t } = useLanguage();
   const [collapsed, setCollapsed] = useState(false);
   const [activeMenu, setActiveMenu] = useState("dashboard");
   const [isOnline, setIsOnline] = useState(true);
 
-  const [sampleStats] = useState({
-    positions: 1,
-    candidates: 5,
-    totalVoters: 120,
-    voted: 87,
-  });
+  const [sampleStats, setSampleStats] = useState(null);
+  const [winningCandidates, setWinningCandidates] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const [winningCandidates] = useState([
-    { name: "Aarav Shrestha", votes: 56 },
-    { name: "Sujal KC", votes: 42 },
-    { name: "Kiran Rai", votes: 30 },
-  ]);
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const [stats, winners] = await Promise.all([
+          getAdminStats(),
+          getWinningCandidates(),
+        ]);
+        setSampleStats(stats);
+        setWinningCandidates(winners);
+      } catch (error) {
+        console.error("Error loading dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
 
   const handleLogout = () => {
     localStorage.clear();
-    navigate("/"); 
+    navigate("/");
   };
 
   const handleMenuClick = (id) => {
@@ -67,21 +77,8 @@ const AdminDashboard = () => {
     alert(`More details about ${type} will appear here later.`);
   };
 
-  const chartData = {
-    labels: winningCandidates.map((c) => c.name),
-    datasets: [
-      {
-        label: "Votes (Mayor)",
-        data: winningCandidates.map((c) => c.votes),
-        backgroundColor: ["#2563eb", "#16a34a", "#f59e0b"],
-        borderRadius: 6,
-      },
-    ],
-  };
-
   return (
     <div className="flex min-h-screen bg-slate-50">
-      {/* Sidebar */}
       <aside
         className={`flex flex-col bg-slate-900 text-white transition-all duration-200 ${
           collapsed ? "w-20" : "w-64"
@@ -111,7 +108,6 @@ const AdminDashboard = () => {
           </button>
         </div>
 
-        {/* Profile */}
         <div className="flex items-center gap-3 p-4 border-b border-slate-800">
           <div className="relative">
             <div className="inline-flex items-center justify-center w-10 h-10 bg-blue-800 rounded-full">
@@ -159,7 +155,7 @@ const AdminDashboard = () => {
         <div className="p-4 border-t border-slate-800">
           <button
             onClick={handleLogout}
-            className="flex items-center justify-center gap-2 w-full py-2 bg-red-600 rounded-md hover:bg-red-700"
+            className="flex items-center justify-center gap-2 w-full py-2 bg-blue-800 text-white hover:bg-blue-900 rounded-lg"
           >
             <LogOut className="w-4 h-4" />
             {!collapsed && <span className="font-semibold">{t("logout")}</span>}
@@ -173,63 +169,95 @@ const AdminDashboard = () => {
             <div className="inline-flex items-center justify-center w-10 h-10 bg-blue-800 rounded-full">
               <User className="w-6 h-6 text-white" />
             </div>
-            <p className="text-lg text-white font-bold">{t("systemAdministrator")}</p>
+            <p className="text-lg text-white font-bold">
+              {t("systemAdministrator")}
+            </p>
           </div>
         </header>
 
         <main className="flex-1 p-6 overflow-auto">
           {activeMenu === "dashboard" ? (
-            <>
-              <h1 className="text-3xl font-bold text-slate-800 mb-6">{t("dashboard")}</h1>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                <div className="bg-green-700 text-white p-6 rounded-xl shadow-lg flex flex-col justify-between">
-                  <div>
-                    <h2 className="text-4xl font-extrabold">{sampleStats.candidates}</h2>
-                    <p className="text-sm mt-2 opacity-90">{t("total")} {t("candidates")}</p>
+            loading ? (
+              <p className="text-center text-gray-600">{t("loading")}...</p>
+            ) : (
+              <>
+                <h1 className="text-3xl font-bold text-slate-800 mb-6">
+                  {t("dashboard")}
+                </h1>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                  <div className="bg-green-700 text-white p-6 rounded-xl shadow-lg flex flex-col justify-between">
+                    <div>
+                      <h2 className="text-4xl font-extrabold">
+                        {sampleStats?.candidates ?? 0}
+                      </h2>
+                      <p className="text-sm mt-2 opacity-90">
+                        {t("total")} {t("candidates")}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleMoreInfo("candidates")}
+                      className="mt-4 self-start text-white border border-white/50 rounded-lg py-1.5 px-4 text-sm hover:bg-white/20"
+                    >
+                      {t("moreInfo")}
+                    </button>
                   </div>
-                  <button
-                    onClick={() => handleMoreInfo("candidates")}
-                    className="mt-4 self-start text-white border border-white/50 rounded-lg py-1.5 px-4 text-sm hover:bg-white/20"
-                  >
-                    {t("moreInfo")}
-                  </button>
+
+                  <div className="bg-blue-800 text-white p-6 rounded-xl shadow-lg flex flex-col justify-between">
+                    <div>
+                      <h2 className="text-4xl font-extrabold">
+                        {sampleStats?.totalVoters ?? 0}
+                      </h2>
+                      <p className="text-sm mt-2 opacity-90">
+                        {t("total")} {t("voters")}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleMoreInfo("voters")}
+                      className="mt-4 self-start text-white border border-white/50 rounded-lg py-1.5 px-4 text-sm hover:bg-white/20"
+                    >
+                      {t("moreinfo")}
+                    </button>
+                  </div>
+
+                  <div className="bg-pink-600 text-white p-6 rounded-xl shadow-lg flex flex-col justify-between">
+                    <div>
+                      <h2 className="text-4xl font-extrabold">
+                        {sampleStats?.voted ?? 0}
+                      </h2>
+                      <p className="text-sm mt-2 opacity-90">
+                        {t("voters")} {t("voted")}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => handleMoreInfo("voted")}
+                      className="mt-4 self-start text-white border border-white/50 rounded-lg py-1.5 px-4 text-sm hover:bg-white/20"
+                    >
+                      {t("moreinfo")}
+                    </button>
+                  </div>
                 </div>
 
-                <div className="bg-blue-800 text-white p-6 rounded-xl shadow-lg flex flex-col justify-between">
-                  <div>
-                    <h2 className="text-4xl font-extrabold">{sampleStats.totalVoters}</h2>
-                    <p className="text-sm mt-2 opacity-90">{t("total")} {t("voters")}</p>
-                  </div>
-                  <button
-                    onClick={() => handleMoreInfo("voters")}
-                    className="mt-4 self-start text-white border border-white/50 rounded-lg py-1.5 px-4 text-sm hover:bg-white/20"
-                  >
-                   {t("moreinfo")}
-                  </button>
+                <div className="bg-white rounded-xl shadow-md p-6">
+                  <h2 className="text-xl font-semibold text-slate-700 mb-4">
+                    Winning Candidates (Mayor)
+                  </h2>
+                  <Bar
+                    data={{
+                      labels: winningCandidates.map((c) => c.name),
+                      datasets: [
+                        {
+                          label: "Votes",
+                          data: winningCandidates.map((c) => c.votes),
+                          backgroundColor: ["#2563eb", "#16a34a", "#f59e0b"],
+                          borderRadius: 6,
+                        },
+                      ],
+                    }}
+                  />
                 </div>
-
-                <div className="bg-pink-600 text-white p-6 rounded-xl shadow-lg flex flex-col justify-between">
-                  <div>
-                    <h2 className="text-4xl font-extrabold">{sampleStats.voted}</h2>
-                    <p className="text-sm mt-2 opacity-90">{t("voters")} {t("voted")}</p>
-                  </div>
-                  <button
-                    onClick={() => handleMoreInfo("voted")}
-                    className="mt-4 self-start text-white border border-white/50 rounded-lg py-1.5 px-4 text-sm hover:bg-white/20"
-                  >
-                    {t("moreinfo")}
-                  </button>
-                </div>
-              </div>
-
-              {/* Bar Chart */}
-              <div className="bg-white rounded-xl shadow-md p-6">
-                <h2 className="text-xl font-semibold text-slate-700 mb-4">
-                  Winning Candidates (Mayor)
-                </h2>
-                <Bar data={chartData} />
-              </div>
-            </>
+              </>
+            )
           ) : (
             <Outlet />
           )}

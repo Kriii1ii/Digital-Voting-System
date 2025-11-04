@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import AddVoterModal from "./AddVoterModal";
 import EditVoterModal from "./EditVoterModal";
 import { useLanguage } from "../contexts/LanguageContext";
+import { getVoters, deleteVoter, updateVoter } from "../api/endpoints"; // Import your API functions
 
 const VotersList = () => {
   const { t } = useLanguage();
@@ -10,20 +11,42 @@ const VotersList = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedVoter, setSelectedVoter] = useState(null);
 
-  const [voters, setVoters] = useState([
-    { id: 1, fullname: "Anuska Shrestha", email: "anu@gmail.com", phone: "7414741470" },
-    { id: 2, fullname: "Kritu Khanal", email: "kritu@gmail.com", phone: "8520001470" },
-    { id: 3, fullname: "Anmol Shrestha", email: "anmol@gmail.com", phone: "7158960145" },
-  ]);
+  const [voters, setVoters] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch voters from backend
+  useEffect(() => {
+    const fetchVoters = async () => {
+      try {
+        const data = await getVoters(); // API call
+        setVoters(data);
+      } catch (error) {
+        console.error("Error fetching voters:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchVoters();
+  }, []);
 
   // Delete voter
-  const handleDelete = (id) => {
-    setVoters(voters.filter((v) => v.id !== id));
+  const handleDelete = async (id) => {
+    try {
+      await deleteVoter(id); // API call
+      setVoters(voters.filter((v) => v.id !== id));
+    } catch (error) {
+      console.error("Error deleting voter:", error);
+    }
   };
 
   // Update voter
-  const handleUpdate = (updatedVoter) => {
-    setVoters(voters.map((v) => (v.id === updatedVoter.id ? updatedVoter : v)));
+  const handleUpdate = async (updatedVoter) => {
+    try {
+      await updateVoter(updatedVoter.id, updatedVoter); // API call
+      setVoters(voters.map((v) => (v.id === updatedVoter.id ? updatedVoter : v)));
+    } catch (error) {
+      console.error("Error updating voter:", error);
+    }
   };
 
   return (
@@ -48,30 +71,44 @@ const VotersList = () => {
           </tr>
         </thead>
         <tbody>
-          {voters.map((v) => (
-            <tr key={v.id} className="hover:bg-slate-50">
-              <td className="p-3 border">{v.fullname}</td>
-              <td className="p-3 border">{v.email}</td>
-              <td className="p-3 border">{v.phone}</td>
-              <td className="p-3 border">
-                <button
-                  onClick={() => {
-                    setSelectedVoter(v);
-                    setShowEditModal(true);
-                  }}
-                  className="bg-blue-800 text-white px-3 py-1 rounded mr-2"
-                >
-                  {t("edit")}
-                </button>
-                <button
-                  onClick={() => handleDelete(v.id)}
-                  className="bg-red-700 text-white px-3 py-1 rounded"
-                >
-                  {t("delete")}
-                </button>
+          {loading ? (
+            <tr>
+              <td colSpan="4" className="text-center py-4 text-gray-500 italic">
+                Loading...
               </td>
             </tr>
-          ))}
+          ) : voters.length > 0 ? (
+            voters.map((v) => (
+              <tr key={v.id} className="hover:bg-slate-50">
+                <td className="p-3 border">{v.fullname}</td>
+                <td className="p-3 border">{v.email}</td>
+                <td className="p-3 border">{v.phone}</td>
+                <td className="p-3 border">
+                  <button
+                    onClick={() => {
+                      setSelectedVoter(v);
+                      setShowEditModal(true);
+                    }}
+                    className="bg-blue-800 text-white px-3 py-1 rounded mr-2"
+                  >
+                    {t("edit")}
+                  </button>
+                  <button
+                    onClick={() => handleDelete(v.id)}
+                    className="bg-red-700 text-white px-3 py-1 rounded"
+                  >
+                    {t("delete")}
+                  </button>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="4" className="text-center py-4 text-gray-500 italic">
+                No voters found
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
 

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
+import { loginUser } from "../api/endpoints";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -16,33 +17,69 @@ const Login = () => {
     role: "voter",
   });
 
+  const [errors, setErrors] = useState({});
+  const [error, setError] = useState("");
+
   const handleChange = (e) => {
-    setCredentials({ ...credentials, [e.target.name]: e.target.value });
-  };
+    const { name, value } = e.target;
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    if (credentials.email && credentials.password) {
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("userEmail", credentials.email);
-      localStorage.setItem("userRole", credentials.role);
-
-      if (credentials.role === "admin") {
-        navigate("/admin-dashboard");
-      } else if (credentials.role === "candidate") {
-        navigate("/");
-      } else {
-        navigate("/");
-      }
+    // Sanitize letters-only or numbers-only if needed in future
+    if (name === "fullName" || name === "district") {
+      const lettersOnly = value.replace(/[^a-zA-Z\s]/g, "");
+      setCredentials((prev) => ({ ...prev, [name]: lettersOnly }));
+    } else if (name === "phone" || name === "ward") {
+      const numbersOnly = value.replace(/\D/g, "");
+      setCredentials((prev) => ({ ...prev, [name]: numbersOnly }));
     } else {
-      alert("Please fill in all required fields.");
+      setCredentials((prev) => ({ ...prev, [name]: value }));
     }
   };
 
-  const handleBack = () => {
-    navigate("/register");
+  const validateForm = () => {
+    const errs = {};
+
+    if (!credentials.email.trim()) errs.email = "Email is required";
+    else if (!credentials.email.includes("@")) errs.email = "Invalid email address";
+
+    if (!credentials.password) errs.password = "Password is required";
+    else if (credentials.password.length < 6) errs.password = "Password must be at least 6 characters";
+
+    if (!credentials.idNumber.trim()) errs.idNumber = "ID Number is required";
+    if (!credentials.voterid.trim()) errs.voterid = "Voter ID is required";
+
+    return errs;
   };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    const validationErrors = validateForm();
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) return; // stop if errors exist
+
+    try {
+      const data = await loginUser(credentials);
+
+      // Save token and user info
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("userEmail", data.email);
+      localStorage.setItem("userRole", data.role);
+      localStorage.setItem("voterId", data.id);
+      localStorage.setItem("fullName", data.fullName);
+      localStorage.setItem("profilePic", data.profilePic || "");
+
+      // Redirect based on role
+      if (data.role === "admin") navigate("/admin-dashboard");
+      else if (data.role === "candidate") navigate("/candidate-dashboard");
+      else if (data.role === "electrol committee") navigate("/electrol-committee-dashboard");
+      else navigate("/voter-dashboard");
+    } catch (err) {
+      setError(err.response?.data?.message || "Login failed. Please check your credentials.");
+    }
+  };
+
+  const handleBack = () => navigate("/register");
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
@@ -64,6 +101,8 @@ const Login = () => {
       >
         <h2 className="text-2xl font-bold text-center">{t("login")}</h2>
 
+        {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+
         {/* Email */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -76,8 +115,8 @@ const Login = () => {
             onChange={handleChange}
             placeholder={t("emailPlaceholder")}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-all"
-            required
           />
+          {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
         </div>
 
         {/* Password */}
@@ -92,11 +131,11 @@ const Login = () => {
             onChange={handleChange}
             placeholder={t("passwordPlaceholder")}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-all"
-            required
           />
+          {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
         </div>
 
-        {/* Role Selection */}
+        {/* Role */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             {t("role")} <span className="text-red-500">*</span>
@@ -110,6 +149,7 @@ const Login = () => {
             <option value="voter">{t("voter")}</option>
             <option value="candidate">{t("candidate")}</option>
             <option value="admin">{t("admin")}</option>
+            <option value="electrol committee">{t("electrolCommittee")}</option>
           </select>
         </div>
 
@@ -137,8 +177,9 @@ const Login = () => {
             {credentials.idType === "passport"
               ? t("passport")
               : credentials.idType === "national"
-                ? t("national")
-                : t("citizenship")}{" "}<span className="text-red-500">*</span>
+              ? t("national")
+              : t("citizenship")}{" "}
+            <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -147,8 +188,8 @@ const Login = () => {
             onChange={handleChange}
             placeholder={t("idPlaceholder")}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-all"
-            required
           />
+          {errors.idNumber && <p className="text-red-500 text-sm mt-1">{errors.idNumber}</p>}
         </div>
 
         {/* Voter ID */}
@@ -163,11 +204,10 @@ const Login = () => {
             onChange={handleChange}
             placeholder={t("voteridPlaceholder")}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-all"
-            required
           />
+          {errors.voterid && <p className="text-red-500 text-sm mt-1">{errors.voterid}</p>}
         </div>
 
-        {/* Submit */}
         <button
           type="submit"
           className="w-full bg-blue-800 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"

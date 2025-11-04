@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { RotateCcw } from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
+import { getVotes } from "../api/endpoints"; // <-- import API function
 
 const Votes = () => {
   const { t } = useLanguage();
@@ -9,14 +10,9 @@ const Votes = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch votes from backend API
     const fetchVotes = async () => {
       try {
-        const response = await fetch("/api/votes"); // Backend endpoint (your friend will create)
-        if (!response.ok) {
-          throw new Error("Failed to fetch votes");
-        }
-        const data = await response.json();
+        const data = await getVotes(); // <-- call API from endpoints.js
         setVotes(data);
       } catch (error) {
         console.error("Error fetching votes:", error);
@@ -24,7 +20,6 @@ const Votes = () => {
         setLoading(false);
       }
     };
-
     fetchVotes();
   }, []);
 
@@ -41,14 +36,12 @@ const Votes = () => {
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold text-gray-700">{t("votes")}</h1>
-
           <div className="flex items-center gap-3">
             <button
               onClick={handleReset}
               className="flex items-center gap-2 bg-red-600 text-white px-3 py-2 rounded hover:bg-red-700 transition"
             >
-              <RotateCcw className="w-4 h-4" />
-              {t("reset")}
+              <RotateCcw className="w-4 h-4" /> {t("reset")}
             </button>
             <input
               type="text"

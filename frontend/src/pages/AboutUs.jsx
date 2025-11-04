@@ -1,11 +1,11 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { useLanguage } from "../contexts/LanguageContext"; 
+import { useLanguage } from "../contexts/LanguageContext";
 
 const AboutUs = () => {
     const navigate = useNavigate();
     const { t } = useLanguage();
-    
+
     return (
         <div className="min-h-screen bg-blue-100 flex flex-col">
             <nav className="w-full bg-gray-100 shadow-md py-3 flex justify-center items-center fixed top-0 left-0 z-50">
@@ -37,21 +37,27 @@ const AboutUs = () => {
 
                 <div className="grid md:grid-cols-3 gap-6 mb-10 max-w-5xl w-full mx-auto">
                     <div className="bg-gray-50 shadow-md rounded-2xl p-8 min-h-[240px] hover:shadow-lg transition text-left">
-                        <h3 className="text-xl font-semibold text-blue-800 mb-2 text-center">🔒 {t("secure")}</h3>
+                        <h3 className="text-xl font-semibold text-blue-800 mb-2 text-center">
+                            🔒 {t("secure")}
+                        </h3>
                         <p className="text-gray-600">
                             {t("securePart")}
                         </p>
                     </div>
 
                     <div className="bg-gray-50 shadow-md rounded-2xl p-8 min-h-[240px] hover:shadow-lg transition text-left">
-                        <h3 className="text-xl font-semibold text-blue-800 mb-2 text-center">⚡ {t("fast")}</h3>
+                        <h3 className="text-xl font-semibold text-blue-800 mb-2 text-center">
+                            ⚡{t("fast")}
+                        </h3>
                         <p className="text-gray-600">
                             {t("fastPart")}
                         </p>
                     </div>
 
                     <div className="bg-gray-50 shadow-md rounded-2xl p-8 min-h-[240px] hover:shadow-lg transition text-left">
-                        <h3 className="text-xl font-semibold text-blue-800 mb-2 text-center">🌍 {t("transparent")}</h3>
+                        <h3 className="text-xl font-semibold text-blue-800 mb-2 text-center">
+                            🌍 {t("transparent")}
+                        </h3>
                         <p className="text-gray-600">
                             {t("transparentPart")}
                         </p>

@@ -1,49 +1,71 @@
-import React, { useState } from "react";
+// src/pages/CandidatesList.jsx
+import React, { useState, useEffect } from "react";
 import AddCandidateModal from "./AddCandidateModal";
 import EditCandidateModal from "./EditCandidateModal";
 import { useLanguage } from "../contexts/LanguageContext";
+import {
+  getCandidates,
+  addCandidate,
+  updateCandidate,
+  deleteCandidate,
+} from "../api/endpoints";
 
 const CandidatesList = () => {
-    const { t } = useLanguage();
+  const { t } = useLanguage();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
+  const [candidates, setCandidates] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const [candidates, setCandidates] = useState([
-    {
-      id: 1,
-      fullname: "Saurav Shrestha",
-      bio: ".......",
-    },
-    {
-      id: 2,
-      fullname: "Sijak Shrestha",
-      bio: "tyfhgfjhg",
-      
-    },
-    {
-      id: 3,
-      fullname: "Ansu Stha",
-      bio: "Djhghjt",
-    },
-  ]);
+  // Fetch candidates from API on mount
+  useEffect(() => {
+    const fetchCandidates = async () => {
+      try {
+        const data = await getCandidates();
+        setCandidates(data);
+      } catch (error) {
+        console.error("Error fetching candidates:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCandidates();
+  }, []);
 
   // Delete candidate
-  const handleDelete = (id) => {
-    setCandidates(candidates.filter((c) => c.id !== id));
+  const handleDelete = async (id) => {
+    try {
+      await deleteCandidate(id);
+      setCandidates(candidates.filter((c) => c.id !== id));
+    } catch (error) {
+      console.error("Error deleting candidate:", error);
+    }
   };
 
   // Add candidate
-  const handleAdd = (newCandidate) => {
-    setCandidates([...candidates, { id: Date.now(), ...newCandidate }]);
+  const handleAdd = async (newCandidate) => {
+    try {
+      const added = await addCandidate(newCandidate);
+      setCandidates([...candidates, added]);
+    } catch (error) {
+      console.error("Error adding candidate:", error);
+    }
   };
 
   // Update candidate
-  const handleUpdate = (updatedCandidate) => {
-    setCandidates(
-      candidates.map((c) => (c.id === updatedCandidate.id ? updatedCandidate : c))
-    );
+  const handleUpdate = async (updatedCandidate) => {
+    try {
+      const updated = await updateCandidate(updatedCandidate.id, updatedCandidate);
+      setCandidates(
+        candidates.map((c) => (c.id === updated.id ? updated : c))
+      );
+    } catch (error) {
+      console.error("Error updating candidate:", error);
+    }
   };
+
+  if (loading) return <div className="text-center p-6">Loading...</div>;
 
   return (
     <div className="bg-white rounded-xl shadow-md p-6">
@@ -106,6 +128,7 @@ const CandidatesList = () => {
           onAdd={handleAdd}
         />
       )}
+
       {showEditModal && (
         <EditCandidateModal
           candidate={selectedCandidate}

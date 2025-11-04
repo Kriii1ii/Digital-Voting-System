@@ -1,98 +1,102 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Shield } from 'lucide-react';
-import { useLanguage } from '../contexts/LanguageContext';
-import NepaliDatePicker from '@sbmdkl/nepali-datepicker-reactjs';
-import '@sbmdkl/nepali-datepicker-reactjs/dist/index.css';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft, User, Shield } from "lucide-react";
+import { useLanguage } from "../contexts/LanguageContext";
+import NepaliDatePicker from "@sbmdkl/nepali-datepicker-reactjs";
+import "@sbmdkl/nepali-datepicker-reactjs/dist/index.css";
+import { registerUser } from "../api/endpoints";
 
 const Registration = () => {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
 
   const [formData, setFormData] = useState({
-    role: 'voter',
-    fullName: '',
-    dateOfBirth: '',
-    phone: '',
-    email: '',
-    password: '',
-    idType: 'citizenship',
-    idNumber: '',
-    voterid: '',
-    province: '',
-    district: '',
-    ward: ''
+    role: "voter",
+    fullName: "",
+    dateOfBirth: "",
+    phone: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    idType: "citizenship",
+    idNumber: "",
+    voterId: "",
+    province: "",
+    district: "",
+    ward: ""
   });
 
   const [formErrors, setFormErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    if (name === 'fullName') {
-      const lettersOnly = value.replace(/[^a-zA-Z\s]/g, '');
-      setFormData(prev => ({ ...prev, [name]: lettersOnly }));
-    } else if (name === 'phone') {
-      const numbersOnly = value.replace(/\D/g, '');
-      setFormData(prev => ({ ...prev, [name]: numbersOnly }));
-    } else if (name === 'district') {
-      const lettersOnly = value.replace(/[^a-zA-Z]/g, '');
-      setFormData(prev => ({ ...prev, [name]: lettersOnly }));
+    if (name === "fullName") {
+      const lettersOnly = value.replace(/[^a-zA-Z\s]/g, "");
+      setFormData((prev) => ({ ...prev, [name]: lettersOnly }));
+    } else if (name === "phone") {
+      const numbersOnly = value.replace(/\D/g, "");
+      setFormData((prev) => ({ ...prev, [name]: numbersOnly }));
+    } else if (name === "district") {
+      const lettersOnly = value.replace(/[^a-zA-Z]/g, "");
+      setFormData((prev) => ({ ...prev, [name]: lettersOnly }));
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
   const handleDateChange = (value) => {
-    setFormData(prev => ({
-      ...prev,
-      dateOfBirth: value
-    }));
+    setFormData((prev) => ({ ...prev, dateOfBirth: value }));
   };
 
   const validateForm = () => {
     const errors = {};
 
     if (!formData.fullName.trim()) errors.fullName = "Full name is required";
-    else if (!/^[a-zA-Z\s]+$/.test(formData.fullName)) errors.fullName = "Full name must contain letters and spaces only";
-
     if (!formData.dateOfBirth) errors.dateOfBirth = "Date of birth is required";
-
     if (!formData.phone) errors.phone = "Phone is required";
-    else if (!/^\d{10}$/.test(formData.phone)) errors.phone = "Phone must be 10 digits";
-
+    if (!/^\d{10}$/.test(formData.phone)) errors.phone = "Phone must be 10 digits";
     if (!formData.email.includes("@")) errors.email = "Invalid email address";
-
-    if (formData.password.length < 6) errors.password = "Password must be at least 6 characters";
-
+    if (formData.password.length < 6)
+      errors.password = "Password must be at least 6 characters";
+    if (formData.password !== formData.confirmPassword)
+      errors.confirmPassword = "Passwords do not match";
     if (!formData.idNumber) errors.idNumber = "ID is required";
-   
-    if (!formData.confirmPassword) errors.confirmPassword = "Confirm  your Password";
-
-    if (!formData.voterid) errors.voterid = "Voter ID is required";
-
+    if (!formData.voterId) errors.voterId = "Voter ID is required";
     if (!formData.province) errors.province = "Province is required";
-
     if (!formData.district.trim()) errors.district = "District is required";
-
     if (!formData.ward.trim()) errors.ward = "Ward Number is required";
-    
+
     return errors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const errors = validateForm();
     setFormErrors(errors);
 
     if (Object.keys(errors).length === 0) {
-      console.log("Form submitted:", formData);
-      navigate("/login");
+      setLoading(true);
+      try {
+        // ✅ Call backend API
+        const response = await registerUser(formData);
+        console.log("User registered successfully:", response);
+
+        alert(t("registrationSuccess") || "Registration successful!");
+        navigate("/login");
+      } catch (error) {
+        console.error("Registration failed:", error);
+        alert("Registration failed. Please try again.");
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
   const handleBack = () => {
     navigate("/");
   };
+
 
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4">
@@ -210,12 +214,13 @@ const Registration = () => {
                   {formErrors.password && <p className="text-red-500 text-sm mt-1">{formErrors.password}</p>}
                 </div>
 
+                {/*Comfirm Password */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     {t("confirmPassword")} <span className="text-red-500">*</span>
                   </label>
                   <input
-                    type="confirmPassword"
+                    type="Password"
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
@@ -284,17 +289,17 @@ const Registration = () => {
                 {/* Voter ID */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {t("voterid")} <span className="text-red-500">*</span>
+                    {t("voterId")} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
-                    name="voterid"
-                    value={formData.voterid}
+                    name="voterId"
+                    value={formData.voterId}
                     onChange={handleInputChange}
-                    placeholder={t("voteridPlaceholder")}
+                    placeholder={t("voterIdPlaceholder")}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-all"
                   />
-                  {formErrors.voterid && <p className="text-red-500 text-sm mt-1">{formErrors.voterid}</p>}
+                  {formErrors.voterId && <p className="text-red-500 text-sm mt-1">{formErrors.voterId}</p>}
                 </div>
 
                 {/* Province */}
@@ -383,3 +388,11 @@ const Registration = () => {
 };
 
 export default Registration;
+
+
+
+
+
+
+
+

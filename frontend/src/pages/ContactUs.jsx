@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../contexts/LanguageContext";
+import { sendContactMessage } from "../api/endpoints"; // ✅ import API function
 
 const ContactUs = () => {
     const navigate = useNavigate();
@@ -12,14 +13,31 @@ const ContactUs = () => {
         message: "",
     });
 
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        alert("Message sent! Thank you for contacting us.");
-        setFormData({ name: "", email: "", message: "" });
+        setError("");
+        setLoading(true);
+
+        try {
+            await sendContactMessage(formData); // ✅ call backend API
+            alert(t("msgsent") || "Message sent! Thank you for contacting us.");
+            setFormData({ name: "", email: "", message: "" });
+        } catch (err) {
+            console.error("Error sending message:", err);
+            setError(
+                err.response?.data?.message ||
+                "Failed to send message. Please try again."
+            );
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -42,6 +60,12 @@ const ContactUs = () => {
                     onSubmit={handleSubmit}
                     className="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg mb-16"
                 >
+                    {error && (
+                        <p className="text-red-500 text-sm text-center mb-4">
+                            {error}
+                        </p>
+                    )}
+
                     <div className="mb-4">
                         <label className="block text-gray-700 font-medium mb-2">{t("name")}</label>
                         <input
@@ -64,7 +88,7 @@ const ContactUs = () => {
                             onChange={handleChange}
                             required
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                            placeholder= {t("emailPlaceholder")}
+                            placeholder={t("emailPlaceholder")}
                         />
                     </div>
 
@@ -77,15 +101,18 @@ const ContactUs = () => {
                             required
                             rows="5"
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                            placeholder= {t("messagePlaceholder")}
+                            placeholder={t("messagePlaceholder")}
                         ></textarea>
                     </div>
 
                     <button
                         type="submit"
-                        className="w-full bg-blue-800 text-white py-3 rounded-lg hover:bg-blue-700 transition font-medium"
+                        disabled={loading}
+                        className={`w-full bg-blue-800 text-white py-3 rounded-lg hover:bg-blue-700 transition font-medium ${
+                            loading ? "opacity-70 cursor-not-allowed" : ""
+                        }`}
                     >
-                        {t("sendmsg")}
+                        {loading ? t("sending") || "Sending..." : t("sendmsg")}
                     </button>
                 </form>
             </main>
@@ -111,7 +138,6 @@ const ContactUs = () => {
                             <span className="font-medium">{t("address")}:</span> {t("add")}
                         </p>
                     </div>
-
                 </div>
 
                 <div className="text-center py-4 border-t border-gray-300 text-sm text-gray-600">

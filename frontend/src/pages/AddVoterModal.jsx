@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { useLanguage } from "../contexts/LanguageContext"; 
+import { useLanguage } from "../contexts/LanguageContext";
 
 const AddVoterModal = ({ onClose }) => {
-  const { t } = useLanguage(); 
+  const { t } = useLanguage();
   const [formData, setFormData] = useState({
     fullname: "",
     email: "",
@@ -14,19 +14,45 @@ const AddVoterModal = ({ onClose }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("🧾 New Voter Added:", formData);
-    alert(`Voter ${formData.fullname} added (frontend only)!`);
-    onClose(); 
-  };
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  try {
+    const response = await fetch("http://localhost:5000/api/voters", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(formData),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to add voter");
+    }
+
+    const data = await response.json();
+    console.log("✅ New Voter Added:", data);
+    alert(`${t("voterAddedSuccess") || `Voter ${formData.fullname} added successfully!`}`);
+  } catch (error) {
+    console.error("❌ Error adding voter:", error);
+    alert(t("voterAddError") || "Error adding voter. Please try again.");
+  }
+
+  onClose();
+};
+
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white p-6 rounded-lg w-full max-w-lg shadow-lg max-h-[90vh] overflow-y-auto">
-        <h2 className="text-xl font-semibold mb-4 text-center">{t("addVoter")}</h2>
+        <h2 className="text-xl font-semibold mb-4 text-center">
+          {t("addVoter")}
+        </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-4 flex flex-col justify-between">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4 flex flex-col justify-between"
+        >
           <div>
             {/* Full Name */}
             <div>
@@ -91,7 +117,6 @@ const AddVoterModal = ({ onClose }) => {
             </div>
           </div>
 
-          
           <div className="flex justify-between mt-6">
             <button
               type="button"
