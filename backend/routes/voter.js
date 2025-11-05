@@ -69,7 +69,7 @@ router.get('/check/:voterId', protect, authorize('committee', 'admin'), async (r
 // ✅ GET /api/voters/:id — fetch a single voter by database ID
 router.get('/:id', async (req, res) => {
   try {
-    const voter = await Voter.findOne({ voterId: req.params.id }); // Changed from findById to findOne
+    const voter = await Voter.findById(req.params.id);
     if (!voter) {
       return res.status(404).json({ success: false, message: 'Voter not found' });
     }

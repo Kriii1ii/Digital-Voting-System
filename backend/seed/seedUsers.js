@@ -6,7 +6,7 @@ let Imported = require('../models/User');
 const User = Imported?.default || Imported?.User || Imported;
 
 if (!User || typeof User.findOne !== 'function') {
-  console.error(' ../models/User did not export a Mongoose model. Got:', Imported);
+  console.error('❌ ../models/User did not export a Mongoose model. Got:', Imported);
   process.exit(1);
 }
 
@@ -23,9 +23,9 @@ async function upsertUser({ fullName, email, password, role, phone }) {
   const u = new User({ fullName, email, password, role, phone });
   try {
     await u.save();
-    console.log(` Created: ${email} (role: ${role})`);
+    console.log(`➕ Created: ${email} (role: ${role})`);
   } catch (err) {
-    console.error(` Failed to create ${email}:`, err?.message || err);
+    console.error(`❌ Failed to create ${email}:`, err?.message || err);
     throw err;
   }
 }

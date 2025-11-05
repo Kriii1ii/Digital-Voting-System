@@ -3,22 +3,17 @@
 const mongoose=require('mongoose');
 const bcrypt=require('bcryptjs');
 
+const ROLES = ['voter', 'admin', 'committee', 'candidate'];
+const reqIfVoter = function () { return this.role === 'voter' || this.role=== 'candidate'; };
+
 const userSchema = new mongoose.Schema(
   {
     role: {
       type: String,
-      // keep existing role name for committee
-      enum: ['voter', 'candidate', 'admin', 'electoral_committee'],
       default: 'voter',
+      enum: ROLES,
       index: true,
     },
-
-    fullName: { type: String, required: true, trim: true },
-
-    dateOfBirth: { type: String, required: true },
-    phone: { type: String, required: true, trim: true },
-
-    // email normalized & unique
     email: {
       type: String,
       required: true,
@@ -27,49 +22,44 @@ const userSchema = new mongoose.Schema(
       trim: true,
       index: true,
     },
-
-    // hide password from queries by default
     password: { type: String, required: true, select: false },
 
-    idType: { type: String, enum: ['citizenship', 'national', 'passport'], required: true },
-    idNumber: { type: String, required: true, trim: true },
+    fullName: { type: String, required: true, trim: true },
 
-    // canonical: voterId; alias keeps backward-compat with `voterid`
-    voterId: {
-      type: String,
-      required: true,
-      unique: false,
-      index: true,
-      alias: 'voterid',
-      trim: true,
-    },
-
-    province: { type: String, required: true, trim: true },
-    district: { type: String, required: true, trim: true },
-    ward: { type: Number, required: true },
-
+    dateOfBirth: { type: String, required: reqIfVoter },                          // e.g. "1970-10-26"
+    idType:      { type: String, required: reqIfVoter },                          // e.g. "national"
+    idNumber:    { type: String, required: reqIfVoter },                          // e.g. "4768405"
+    voterId:     { type: String, trim: true, unique: true, sparse: true, required: reqIfVoter },
+    province:    { type: String, trim: true, required: reqIfVoter },
+    district:    { type: String, trim: true, required: reqIfVoter },
+    ward:        { type: Number,              required: reqIfVoter },
+    phone:       { type: String, trim: true, required: reqIfVoter },
     // canonical: isVerified; alias keeps backward-compat with `verified`
     isVerified: {
       type: Boolean,
       default: false,
       alias: 'verified',
       index: true,
+      required: reqIfVoter
     },
 
     // --- Biometric fields merged from biometric module ---
     // New biometric fields
     biometricRegistered: {
       type: Boolean,
-      default: false
+      default: false,
+      required: reqIfVoter
     },
     biometricType: {
       type: String,
       enum: ['face', 'webauthn', null],
-      default: null
+      default: null,
+      required: reqIfVoter
     },
     biometricRegistrationDate: {
       type: Date,
-      default: null
+      default: null,
+      required: reqIfVoter
     },
 
     // Detailed biometric auth metadata (per user's requested layout)
@@ -80,7 +70,8 @@ const userSchema = new mongoose.Schema(
       enrollmentStatus: {
         type: String,
         enum: ['pending', 'completed', 'failed'],
-        default: 'pending'
+        default: 'pending',
+        
       }
     },
 
@@ -118,6 +109,7 @@ const userSchema = new mongoose.Schema(
         durationMonths: { type: Number, default: 0 },
         autoDelete: { type: Boolean, default: true }
       }
+      
     }
 
   },
@@ -162,3 +154,4 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 };
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 module.exports= User;
+module.exports.ROLES= ROLES;

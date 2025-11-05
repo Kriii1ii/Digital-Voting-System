@@ -84,8 +84,6 @@ const biometricSchema = new mongoose.Schema({
   faceImageSample: {
     type: String,
     select: false
-    ,
-    default: null
   },
 
   // Registration and verification tracking
@@ -94,8 +92,7 @@ const biometricSchema = new mongoose.Schema({
     default: Date.now
   },
   lastVerified: {
-    type: Date,
-    default: null
+    type: Date
   },
   verificationAttempts: {
     type: Number,
@@ -124,10 +121,7 @@ const biometricSchema = new mongoose.Schema({
   }
 
 }, {
-  timestamps: true,
-  // loosen schema temporarily for debugging so controller-written fields appear
-  // even if the microservice or encryption step is skipped/fails.
-  strict: false
+  timestamps: true
 });
 
 // Compound index for fast lookups
