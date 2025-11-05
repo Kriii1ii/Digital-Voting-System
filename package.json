@@ -1,6 +1,13 @@
 {
+  "name": "digital-voting-system",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start:all": "concurrently \"cd backend && npm run dev\" \"cd ai-prediction && uvicorn app:app --reload --port 8000\" \"cd frontend && npm run dev\""
+  },
   "dependencies": {
     "csv-parse": "^6.1.0",
-    "multer": "^2.0.2"
+    "multer": "^2.0.2",
+    "concurrently": "^8.2.0"
   }
 }
