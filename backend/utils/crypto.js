@@ -1,6 +1,6 @@
-import crypto from 'crypto';
-import fs from 'fs';
-import path from 'path';
+const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 
 // AES-256-GCM helper utilities
 // Key management: expects BIOMETRIC_MASTER_KEY as base64 (32 bytes). If missing,
@@ -30,7 +30,7 @@ function ensureKey() {
 
 const MASTER_KEY = ensureKey();
 
-export function encryptTemplate(plainObj) {
+function encryptTemplate(plainObj) {
   try {
     const iv = crypto.randomBytes(12); // 96-bit IV for GCM
     const cipher = crypto.createCipheriv(ALGO, MASTER_KEY, iv);
@@ -48,7 +48,7 @@ export function encryptTemplate(plainObj) {
   }
 }
 
-export function decryptTemplate(pkg) {
+function decryptTemplate(pkg) {
   try {
     if (!pkg || !pkg.data || !pkg.iv || !pkg.tag) throw new Error('Invalid encrypted package');
     const iv = Buffer.from(pkg.iv, 'base64');
@@ -63,4 +63,4 @@ export function decryptTemplate(pkg) {
   }
 }
 
-export default { encryptTemplate, decryptTemplate };
+module.exports = { encryptTemplate, decryptTemplate };

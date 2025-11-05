@@ -1,5 +1,5 @@
-import mongoose from 'mongoose';
-import axios from 'axios';
+const mongoose = require('mongoose');
+const axios = require('axios');
 
 const AI_PREDICTION_URL = process.env.AI_PREDICTION_URL || 'http://localhost:8000';
 const DEFAULT_ELECTION_ID = process.env.ELECTION_ID || null;
@@ -68,7 +68,7 @@ async function handleChange(io, change) {
   await fetchAndEmit(io, electionId);
 }
 
-export async function initPredictionWatcher(io) {
+async function initPredictionWatcher(io) {
   if (!io) {
     throw new Error('Socket.IO instance required to init prediction watcher');
   }
@@ -119,4 +119,4 @@ export async function initPredictionWatcher(io) {
   console.log('👀 Prediction watcher initialized. Watching:', collectionsToWatch.join(', '));
 }
 
-export default initPredictionWatcher;
+module.exports = initPredictionWatcher;

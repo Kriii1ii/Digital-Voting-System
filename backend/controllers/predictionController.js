@@ -1,6 +1,5 @@
 const axios = require('axios');
 const mongoose = require('mongoose');
-const mongoose = require('mongoose');
 
 // Helper: retry small number of times for transient AI service failures
 async function retry(fn, attempts = 3, delayMs = 500) {

@@ -1,15 +1,15 @@
-import axios from 'axios';
-import User from '../models/User.js';
-import Biometric from '../models/Biometric.js';
-import logger from '../utils/logger.js';
-import { encryptTemplate, decryptTemplate } from '../utils/crypto.js';
-import { randomUUID } from 'crypto';
-import {
+const axios = require('axios');
+const User = require('../models/User.js');
+const Biometric = require('../models/Biometric.js');
+const logger = require('../utils/logger.js');
+const { encryptTemplate, decryptTemplate } = require('../utils/crypto.js');
+const { randomUUID } = require('crypto');
+const {
   generateRegistrationOptions,
   verifyRegistrationResponse,
   generateAuthenticationOptions,
   verifyAuthenticationResponse
-} from '@simplewebauthn/server';
+} = require('@simplewebauthn/server');
 
 const BIOMETRIC_SERVICE_URL = process.env.BIOMETRIC_SERVICE_URL || 'http://localhost:8000';
 
@@ -800,4 +800,4 @@ class BiometricController {
   // fingerprint test removed
 }
 
-export default new BiometricController();
+module.exports = new BiometricController();

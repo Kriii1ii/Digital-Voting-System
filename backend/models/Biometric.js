@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 const biometricSchema = new mongoose.Schema({
   userId: {
@@ -134,4 +134,4 @@ biometricSchema.pre('save', function (next) {
   next();
 });
 
-export default mongoose.model('Biometric', biometricSchema);
+module.exports = mongoose.model('Biometric', biometricSchema);

@@ -1,8 +1,8 @@
-import express from 'express';
-import biometricController from '../controllers/biometricController.js';
-import rateLimit from 'express-rate-limit';
+const express = require('express');
+const biometricController = require('../controllers/biometricController.js');
+const rateLimit = require('express-rate-limit');
 // middleware exports a named `protect` function — import it and alias to `auth` for routes
-import { protect as auth } from '../middleware/authMiddleware.js';
+const { protect: auth } = require('../middleware/authMiddleware.js');
 
 const router = express.Router();
 
@@ -34,4 +34,4 @@ router.post('/face/verify', auth, biometricController.verifyFace);
 
 // Fingerprint endpoints removed — application is face-only now
 
-export default router;
+module.exports = router;
