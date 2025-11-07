@@ -3,17 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
 import { loginUser } from "../api/endpoints";
+import { useAuth } from "../contexts/AuthContext";
 
 const Login = () => {
+  const { login } = useAuth();
   const navigate = useNavigate();
   const { t } = useLanguage();
 
   const [credentials, setCredentials] = useState({
     email: "",
     password: "",
-    idType: "citizenship",
-    idNumber: "",
-    voterid: "",
     role: "voter",
   });
 
@@ -27,20 +26,15 @@ const Login = () => {
 
   const validateForm = () => {
     const errs = {};
-
     if (!credentials.email.trim()) errs.email = "Email is required";
-    else if (!credentials.email.includes("@"))
-      errs.email = "Invalid email address";
+    else if (!credentials.email.includes("@")) errs.email = "Invalid email address";
 
     if (!credentials.password) errs.password = "Password is required";
     else if (credentials.password.length < 6)
       errs.password = "Password must be at least 6 characters";
+
     if (!credentials.role) errs.role = "Role is required";
-    else if (
-      !["voter", "candidate", "admin", "electoral_committee"].includes(
-        credentials.role
-      )
-    )
+    else if (!["voter", "candidate", "admin", "electoral_committee"].includes(credentials.role))
       errs.role = "Invalid role selected";
 
     return errs;
@@ -55,32 +49,35 @@ const Login = () => {
     if (Object.keys(validationErrors).length > 0) return;
 
     try {
-      const data = await loginUser(credentials);
+      console.log("Sending request to backend...");
+      const res = await loginUser(credentials);
+      console.log("Backend response:", res);
 
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("userEmail", data.email);
-      localStorage.setItem("userRole", data.role);
-      localStorage.setItem("voterId", data.voterId);
-      localStorage.setItem("fullName", data.fullName);
-      localStorage.setItem("profilePic", data.profilePic || "");
+      // ✅ extract correctly
+      const { token, user } = res.data || {};
 
-      let role = (data?.data?.role || "").toLowerCase().trim();
-      role = role.replace(/_/g, " ");
+      if (!token || !user) {
+        throw new Error("Invalid response from server");
+      }
+
+      login(token, user, true);
 
       const roleDashboardMap = {
         admin: "/admin-dashboard",
         candidate: "/candidate-dashboard",
-        "electoral committee": "/electoral-committee-dashboard",
+        electoral_committee: "/electoral-committee-dashboard",
         voter: "/voter-dashboard",
       };
-
-      navigate(roleDashboardMap[role] || "/voter-dashboard");
+      navigate(roleDashboardMap[user.role] || "/voter-dashboard");
     } catch (err) {
+      console.error("Login error:", err);
       setError(
         err.response?.data?.message ||
-          "Login failed. Please check your credentials."
+        err.message ||
+        "Login failed. Please check your credentials."
       );
     }
+
   };
 
   const handleBack = () => navigate("/register");
@@ -118,9 +115,7 @@ const Login = () => {
             placeholder={t("emailPlaceholder")}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-all"
           />
-          {errors.email && (
-            <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-          )}
+          {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
         </div>
 
         {/* Password */}
@@ -136,9 +131,7 @@ const Login = () => {
             placeholder={t("passwordPlaceholder")}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-all"
           />
-          {errors.password && (
-            <p className="text-red-500 text-sm mt-1">{errors.password}</p>
-          )}
+          {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
         </div>
 
         {/* Role */}
@@ -155,13 +148,9 @@ const Login = () => {
             <option value="voter">{t("voter")}</option>
             <option value="candidate">{t("candidate")}</option>
             <option value="admin">{t("admin")}</option>
-            <option value="electoral_committee">
-              {t("electoralCommittee")}
-            </option>
+            <option value="electoral_committee">{t("electoralCommittee")}</option>
           </select>
-          {errors.role && (
-            <p className="text-red-500 text-sm mt-1">{errors.role}</p>
-          )}
+          {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
         </div>
 
         <button

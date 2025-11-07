@@ -1,86 +1,103 @@
 import React, { useState, useEffect } from "react";
 import { ArrowLeft, LogOut } from "lucide-react";
 import { useLanguage } from "../contexts/LanguageContext";
-import {
-  addVoter,
-  getCandidates,
-  getElections,
-  createElection,
-} from "../api/endpoints"; // make sure getElections is exported
-import LivePoll from "../components/LivePoll";
+import { useAuth } from "../contexts/AuthContext";
+import { 
+  addVoter, 
+  getCandidates, 
+  getElections, 
+  createElection, 
+  getVoters 
+} from "../api/endpoints";
 
 const ElectoralCommitteeDashboard = () => {
+  const { token, user, logout } = useAuth();
+  const { t } = useLanguage();
+
+  const [activeSection, setActiveSection] = useState("dashboard");
   const [elections, setElections] = useState([]);
   const [newElection, setNewElection] = useState({ name: "", startDate: "", endDate: "" });
-  const [activeSection, setActiveSection] = useState("dashboard");
-  const { t } = useLanguage() || {};
   const [voters, setVoters] = useState([]);
   const [newVoter, setNewVoter] = useState({ id: "", name: "" });
-  const [editingId, setEditingId] = useState(null);
-  const [editedDates, setEditedDates] = useState({ startDate: "", endDate: "" });
   const [candidates, setCandidates] = useState([]);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [editedDates, setEditedDates] = useState({ startDate: "", endDate: "" });
 
-  // Load data from API on mount
+  // Fetch initial data
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const electionsData = await getElections();
-        setElections(electionsData);
+  const fetchData = async () => {
+    if (!token) return;
 
-        const candidatesData = await getCandidates();
-        setCandidates(candidatesData);
+    try {
+      const electionsData = await getElections(token); // if your elections API requires token
+      setElections(electionsData);
 
-        // Optionally, fetch voters from API if you have a getVoters endpoint
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
-    fetchData();
-  }, []);
+      const candidatesData = await getCandidates(token); // if candidates API requires token
+      setCandidates(candidatesData);
 
-  const handleChange = (e) => setNewElection({ ...newElection, [e.target.name]: e.target.value });
+      const votersData = await getVoters(token); // ✅ pass token here
+      setVoters(votersData);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
+  fetchData();
+}, [token]);
+
+  // --- Handlers ---
+  const handleChangeElection = (e) => setNewElection({ ...newElection, [e.target.name]: e.target.value });
 
   const handleCreateElection = async () => {
-    if (newElection.name && newElection.startDate && newElection.endDate) {
-      try {
-        const created = await createElection(newElection);
-        setElections([...elections, created]);
-        setNewElection({ name: "", startDate: "", endDate: "" });
-      } catch (error) {
-        console.error("Error creating election:", error);
-        alert("Failed to create election");
-      }
-    } else {
+    if (!newElection.name || !newElection.startDate || !newElection.endDate) {
       alert("Please fill all fields");
+      return;
+    }
+
+    // Check role
+    if (!["admin", "committee"].includes(user?.role)) {
+      alert("Only admins or committee members can create elections");
+      return;
+    }
+
+    try {
+      const created = await createElection(newElection, token);
+      setElections([...elections, created]);
+      setNewElection({ name: "", startDate: "", endDate: "" });
+      alert("Election created successfully!");
+    } catch (error) {
+      console.error("Error creating election:", error);
+      alert(error.response?.data?.message || error.message);
     }
   };
 
   const handleAddVoter = async () => {
-    if (newVoter.id && newVoter.name) {
-      if (voters.some((v) => v.id === newVoter.id)) {
-        alert("Voter ID already exists!");
-        return;
-      }
-      try {
-        const added = await addVoter(newVoter);
-        setVoters([...voters, added]);
-        setNewVoter({ id: "", name: "" });
-      } catch (error) {
-        console.error("Error adding voter:", error);
-        alert("Failed to add voter");
-      }
-    } else {
-      alert("Please enter both Voter ID and Name");
+    if (!newVoter.id || !newVoter.name) {
+      alert("Enter both Voter ID and Name");
+      return;
+    }
+
+    if (voters.some(v => v.id === newVoter.id)) {
+      alert("Voter ID already exists!");
+      return;
+    }
+
+    try {
+      const added = await addVoter(newVoter, token);
+      setVoters([...voters, added]);
+      setNewVoter({ id: "", name: "" });
+    } catch (error) {
+      console.error("Failed to add voter:", error);
+      alert("Failed to add voter");
     }
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    window.location.href = "/";
-  };
+  const handleLogout = () => logout();
 
   const handleBack = () => setSelectedCandidate(null);
+
+   const handleChange = (e) => setNewElection({ ...newElection, [e.target.name]: e.target.value });
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -91,9 +108,6 @@ const ElectoralCommitteeDashboard = () => {
           <h1 className="text-3xl font-extrabold bg-gradient-to-r from-blue-900 to-blue-500 text-transparent bg-clip-text tracking-wide">
             Electoral Committee Dashboard
           </h1>
-        </div>
-        <div className="w-full max-w-5xl mx-auto mt-4">
-          <LivePoll />
         </div>
       </header>
 

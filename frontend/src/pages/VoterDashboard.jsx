@@ -1,6 +1,4 @@
-import React, { useState, createContext, useContext, useEffect } from "react";
-import BiometricChoice from "../components/biometric/BiometricChoice";
-import LivePoll from "../components/LivePoll";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Camera, LogOut, User, CheckCircle } from "lucide-react";
 import { getPosts, getCandidates, addVoter, getVoterById, addReaction, addComment } from "../api/endpoints"; // ✅ API imports
@@ -85,7 +83,7 @@ const Navbar = ({ setPage }) => {
   );
 };
 
-// --- FEED PAGE ---
+// --- POST CARD ---
 const PostCard = ({ post, onReact, onComment, user }) => {
   const [showReactions, setShowReactions] = useState(false);
   const [comment, setComment] = useState("");
@@ -193,6 +191,7 @@ const PostCard = ({ post, onReact, onComment, user }) => {
   );
 };
 
+// --- FEED PAGE ---
 const FeedPage = () => {
   const { user } = useAuth();
   const [posts, setPosts] = useState([]);
@@ -262,9 +261,7 @@ const FeedPage = () => {
 
   return (
     <div className="max-w-2xl mx-auto mt-28 px-4">
-      {/* Live poll preview for voters */}
       <LivePoll />
-
       {posts.map((post) => (
         <PostCard key={post.id} post={post} onReact={handleReact} onComment={handleComment} user={user} />
       ))}
@@ -288,7 +285,6 @@ const ProfilePage = () => {
   const saveBio = () => {
     updateBio(bioText);
     setIsEditingBio(false);
-    // Optional: call backend API to save bio
   };
 
   return (
@@ -366,10 +362,10 @@ const VoteNowPage = () => {
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [voted, setVoted] = useState(false);
   const [candidates, setCandidates] = useState([]);
-    const [pendingCandidate, setPendingCandidate] = useState(null);
-    const [showVerifier, setShowVerifier] = useState(false);
-    const [verifLoading, setVerifLoading] = useState(false);
-    const [verifError, setVerifError] = useState(null);
+  const [pendingCandidate, setPendingCandidate] = useState(null);
+  const [showVerifier, setShowVerifier] = useState(false);
+  const [verifLoading, setVerifLoading] = useState(false);
+  const [verifError, setVerifError] = useState(null);
 
   useEffect(() => {
     const fetchCandidates = async () => {
@@ -383,28 +379,25 @@ const VoteNowPage = () => {
     fetchCandidates();
   }, []);
 
-  const handleVote = async (candidate) => {
-    // Open biometric verifier before casting the vote
+  const handleVote = (candidate) => {
     setPendingCandidate(candidate);
     setVerifError(null);
     setShowVerifier(true);
   };
 
-  const onVerificationComplete = async (responseData) => {
-    // Called after BiometricChoice returns a successful verification
+  const onVerificationComplete = async () => {
     try {
       setVerifLoading(true);
       setShowVerifier(false);
-      if (!pendingCandidate) throw new Error('No candidate selected for vote');
-      const effectiveUserId = (user && (user._id || user.id || user.voterId)) || localStorage.getItem('voterId');
+      if (!pendingCandidate) throw new Error("No candidate selected for vote");
+      const effectiveUserId = user?._id || user?.id || user?.voterId || localStorage.getItem("voterId");
       await addVoter({ userId: effectiveUserId, candidateId: pendingCandidate.id });
       setSelectedCandidate(pendingCandidate);
       setVoted(true);
       setPendingCandidate(null);
     } catch (err) {
-      console.error('Voting failed after verification:', err);
-      setVerifError(err.response?.data?.message || err.message || 'Vote failed.');
-      // keep modal closed; let user retry voting
+      console.error("Voting failed:", err);
+      setVerifError(err.response?.data?.message || err.message || "Vote failed.");
     } finally {
       setVerifLoading(false);
     }
@@ -412,8 +405,12 @@ const VoteNowPage = () => {
 
   if (!user) return <div className="text-center mt-20">Loading...</div>;
 
+
   return (
     <div className="max-w-4xl mx-auto mt-28 px-4">
+      <div className="max-w-4xl mx-auto mb-6">
+        <LivePoll />
+      </div>
       {!voted ? (
         <>
           <h2 className="text-3xl md:text-4xl font-bold text-blue-900 mb-6 text-center">

@@ -15,10 +15,11 @@
   "type": "commonjs",
   "dependencies": {
     "@simplewebauthn/server": "^8.3.5",
-    "axios": "^1.6.0",
+    "axios": "^1.13.2",
     "base64url": "^3.0.1",
     "bcryptjs": "^3.0.3",
     "crypto": "^1.0.1",
+
     "cors": "^2.8.5",
     "csv-parse": "^6.1.0",
     "dotenv": "^17.2.3",

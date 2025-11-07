@@ -187,7 +187,6 @@ const AdminDashboard = () => {
         </header>
 
         <main className="flex-1 p-6 overflow-auto">
-          {/* ✅ Dashboard is shown only for root /admin-dashboard */}
           {location.pathname === "/admin-dashboard" ? (
             loading ? (
               <p className="text-center text-gray-600">{t("loading")}...</p>
@@ -277,7 +276,6 @@ const AdminDashboard = () => {
               </>
             )
           ) : (
-            // ✅ Show nested routes (like votes, voters, candidates)
             <Outlet />
           )}
         </main>

@@ -96,7 +96,7 @@ const EditCandidateModal = ({ candidate, onClose, onUpdate }) => {
               disabled={loading}
               className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
             >
-              {loading ? t("loading") : t("update")}
+              {t("save")}
             </button>
           </div>
         </form>

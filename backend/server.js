@@ -77,6 +77,11 @@ app.get('/api/health', (req, res) =>
   res.status(200).json({ status: 'OK', message: 'Backend is healthy' })
 );
 
+// Example in Express
+app.get("/api/posts", (req, res) => {
+  res.send(posts); // if this exists
+});
+
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/candidates', candidateRoutes);
@@ -104,7 +109,7 @@ app.use((err, req, res, next) => {
 
 // Create server and attach socket.io
 // Prefer an env override for PORT to avoid local service conflicts
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5000;
 const server = http.createServer(app);
 
 const io = new Server(server, {

@@ -65,17 +65,20 @@ export const registerUser = async (req, res) => {
 
 //Login User
 export const loginUser = async (req, res) => {
-  try {
-    const { email, password, voterid } = req.body;
+ try {
+    const { email, password } = req.body;
 
-    const user = await User.findOne({ email, voterid });
+    // Find user by email only
+    const user = await User.findOne({ email });
     if (!user)
       return res.status(404).json({ success: false, message: 'User not found' });
 
+    // Check if password matches
     const isMatch = await user.matchPassword(password);
     if (!isMatch)
       return res.status(400).json({ success: false, message: 'Invalid credentials' });
 
+    // Create JWT token
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,

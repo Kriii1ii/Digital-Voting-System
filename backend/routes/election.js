@@ -13,7 +13,7 @@ const router = express.Router();
 // --- Election Routes ---
 
 // Create new election — requires protection and 'admin' role
-router.post("/create", protect, roleMiddleware(["admin"]), createElection);
+router.post("/create", protect, roleMiddleware(["admin", "committee"]), createElection);
 
 // Get all elections — public access
 router.get("/", getElections);
@@ -22,7 +22,7 @@ router.get("/", getElections);
 router.get("/:id", getElectionById);
 
 // End an election — requires protection and 'admin' role
-router.put("/:id/end", protect, roleMiddleware(["admin"]), endElection);
+router.put("/:id/end", protect, roleMiddleware(["admin", "committee"]), endElection);
 
 // Export the router for use in server.js or main app file
 module.exports = router;

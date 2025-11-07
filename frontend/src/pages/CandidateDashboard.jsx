@@ -2,7 +2,6 @@ import React, { useState, useContext, createContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Camera, Video, X, Edit2, Trash2, Save, LogOut } from "lucide-react";
 import { getPosts, createPost, updatePost, deletePost, updateUserProfile } from "../api/endpoints";
-import LivePoll from "../components/LivePoll";
 
 // -------- Auth Context --------
 const AuthContext = createContext();
@@ -400,9 +399,6 @@ const CandidateDashboard = () => {
         <Navbar setPage={setPage} search={search} setSearch={setSearch} />
         {page === "feed" && (
           <>
-            <div className="max-w-2xl mx-auto mt-28 px-4">
-              <LivePoll />
-            </div>
             <FeedPage posts={posts} setPosts={setPosts} onViewMedia={onViewMedia} search={search} />
           </>
         )}
