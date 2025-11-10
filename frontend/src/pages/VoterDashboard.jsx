@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { createContext, useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { Camera, LogOut, User, CheckCircle } from "lucide-react";
 import { getPosts, getCandidates, addVoter, getVoterById, addReaction, addComment } from "../api/endpoints"; // ✅ API imports
