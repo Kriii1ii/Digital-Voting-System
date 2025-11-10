@@ -1,4 +1,7 @@
-from fastapi import FastAPI, HTTPException, Body
+from fastapi import FastAPI, HTTPException, Body, Request
+from fastapi.responses import JSONResponse
+import time
+import os
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 from services.face_service import register_face, verify_face
@@ -23,13 +26,37 @@ def health_check():
     """Health check endpoint"""
     return {"status": "ok", "service": "biometric-service"}
 
+# In-memory rate limiter map: key -> last_request_timestamp (seconds)
+# Key is user-provided user_id (if supplied) or the client IP address.
+_quality_last_request = {}
+
+
 @app.post("/api/face/quality-check")
-def quality_check_endpoint(image: str = Body(..., embed=True)):
+def quality_check_endpoint(request: Request, image: str = Body(..., embed=True), user_id: str = Body(None, embed=True)):
     """
     Perform strict quality check on a face image.
     Returns: { passed: bool, message: str, details: dict }
     """
     try:
+        # Rate limiting: allow one request per KEY every 2 seconds by default
+        key = (user_id or request.headers.get('X-User-Id') or request.client.host)
+        now = time.time()
+        min_interval = float(os.getenv('QUALITY_CHECK_MIN_INTERVAL_SEC', 2.0))
+        last = _quality_last_request.get(key)
+        # cleanup stale entries older than 60s to avoid unbounded growth
+        stale_threshold = now - 60.0
+        for k, t in list(_quality_last_request.items()):
+            if t < stale_threshold:
+                _quality_last_request.pop(k, None)
+
+        if last and (now - last) < min_interval:
+            retry_after = min_interval - (now - last)
+            logger.warning(f"⚠️ Rate limit triggered for user/IP {key}")
+            return JSONResponse(status_code=429, content={"error": "Too many requests, slow down.", "retry_after": retry_after})
+
+        # record request timestamp
+        _quality_last_request[key] = now
+
         if not image:
             return {
                 "passed": False,
@@ -50,12 +77,38 @@ def quality_check_endpoint(image: str = Body(..., embed=True)):
         
         # Perform quality check
         result = perform_quality_check(img)
-        
+
+        # determine a simple quality label to help the client stop polling
+        details = result.get("details") or {}
+        face_detected = bool(result.get("face_detected", False))
+        passed = bool(result.get("passed", False))
+        # Use confidence or score heuristics if available
+        confidence = None
+        for k in ("confidence", "detection_confidence", "score"):
+            if k in details and isinstance(details[k], (int, float)):
+                confidence = float(details[k])
+                break
+
+        quality = "unknown"
+        # If explicit passed flag is true, treat as good
+        if passed and face_detected:
+            quality = "good"
+        elif confidence is not None and confidence >= float(os.getenv('QUALITY_GOOD_CONFIDENCE', 0.5)):
+            quality = "good"
+        else:
+            quality = "poor"
+
+        # Log when quality is good (useful for debugging and client-side stopping)
+        if quality == "good":
+            logger.info(f"✅ Face quality good — stopping checks for {key}")
+
         return {
-            "passed": result.get("passed", False),
+            "passed": passed,
+            "quality": quality,
             "message": result.get("message", "Quality check complete"),
-            "details": result.get("details", {}),
-            "face_detected": result.get("face_detected", False)
+            "details": details,
+            "face_detected": face_detected,
+            "confidence": confidence
         }
     except Exception as e:
         logger.error(f"Quality check error: {str(e)}")
