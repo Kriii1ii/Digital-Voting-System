@@ -172,24 +172,6 @@ const Login = () => {
           {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
         </div>
 
-        {/* Role */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            {t("role")} <span className="text-red-500">*</span>
-          </label>
-          <select
-            name="role"
-            value={credentials.role}
-            onChange={handleChange}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-all"
-          >
-            <option value="voter">{t("voter")}</option>
-            <option value="admin">{t("admin")}</option>
-            <option value="electoral_committee">{t("electoralCommittee")}</option>
-          </select>
-          {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
-        </div>
-
         <button
           type="submit"
           className="w-20 bg-blue-800 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"

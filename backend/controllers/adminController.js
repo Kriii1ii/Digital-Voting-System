@@ -93,3 +93,64 @@ exports.getAdminWinners = async (req, res) => {
     res.status(500).json({ message: "Failed to load winners" });
   }
 };
+
+/**
+ * GET /api/admin/votes/:electionId
+ * Admin-only: returns votes grouped by candidate with voter details
+ */
+exports.getVotesByElection = async (req, res) => {
+  try {
+    const { electionId } = req.params;
+    if (!electionId) return res.status(400).json({ message: 'Missing electionId' });
+
+    // resolve election
+    const election = await Election.findById(electionId);
+    if (!election) return res.status(404).json({ message: 'Election not found' });
+
+    // Aggregate votes with voter details
+    const rows = await Vote.aggregate([
+      { $match: { election: election._id } },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'voter',
+          foreignField: '_id',
+          as: 'voterDoc',
+        },
+      },
+      { $unwind: { path: '$voterDoc', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'candidates',
+          localField: 'candidate',
+          foreignField: '_id',
+          as: 'candidateDoc',
+        },
+      },
+      { $unwind: { path: '$candidateDoc', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          voter: { id: '$voterDoc._id', fullName: '$voterDoc.fullName', email: '$voterDoc.email', role: '$voterDoc.role' },
+          candidate: { id: '$candidateDoc._id', name: '$candidateDoc.fullName', party: '$candidateDoc.partyName' },
+          castAt: '$createdAt',
+        },
+      },
+    ]);
+
+    // Group by candidate
+    const grouped = {};
+    rows.forEach((r) => {
+      const candId = r.candidate?.id ? String(r.candidate.id) : 'unknown';
+      if (!grouped[candId]) grouped[candId] = { candidate: r.candidate || { id: candId, name: 'Unknown' }, votes: 0, voters: [] };
+      grouped[candId].votes += 1;
+      grouped[candId].voters.push(r.voter || null);
+    });
+
+    // Convert to array
+    const result = Object.values(grouped).sort((a, b) => b.votes - a.votes);
+    return res.json({ election: { id: election._id, title: election.title }, results: result });
+  } catch (err) {
+    console.error('getVotesByElection error:', err);
+    res.status(500).json({ message: 'Failed to load votes for election' });
+  }
+};

@@ -130,6 +130,7 @@ app.use('/api/candidates', candidateRoutes);
 app.use('/api/elections', electionRoutes);
 app.use('/api/results', resultsRoutes);
 app.use('/api/prediction', predictionRoutes);
+app.use('/api/predictions', require('./routes/predictions'));
 app.use('/api/voters', VoterRoutes);
 app.use('/api/votes', VoteRoutes);
 // Biometric API mount
@@ -139,6 +140,9 @@ app.use('/api/posts', postRoutes);
 app.use('/api/admin', adminRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/users", userRoutes);
+// Admin repair and system status endpoints
+app.use('/api/admin-repair', require('./routes/adminRepair'));
+app.use('/api/status', require('./routes/status'));
 // 404 handler
 app.use((req, res) => res.status(404).json({ message: 'Route not found' }));
 
@@ -158,7 +162,15 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:5173',
+    origin: function (origin, callback) {
+      // allow server-to-server calls
+      if (!origin) return callback(null, true);
+      const cleaned = origin.replace(/\/$/, '');
+      if (FRONTEND_URLS.includes(cleaned) || (process.env.FRONTEND_URL && cleaned === process.env.FRONTEND_URL.replace(/\/$/, ''))) {
+        return callback(null, true);
+      }
+      return callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
   },
 });
@@ -176,14 +188,42 @@ try {
 }
 // Socket.IO logic
 io.on('connection', (socket) => {
-  console.log('New client connected:', socket.id);
+  console.log('Socket connected:', socket.id, 'from', socket.handshake.address);
 
-  socket.on('joinElection', (electionId) => {
-    socket.join(electionId);
+  // Join a prediction room. Supports legacy 'joinElection' and new 'joinPrediction'
+  socket.on('joinPrediction', (electionId) => {
+    try {
+      const room = `prediction:${electionId}`;
+      socket.join(room);
+      console.log(`Socket ${socket.id} joined room ${room}`);
+    } catch (e) {
+      console.warn('joinPrediction error', e?.message || e);
+    }
   });
 
-  socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
+  socket.on('joinElection', (electionId) => {
+    // legacy support: map to prediction:<id>
+    try {
+      const room = `prediction:${electionId}`;
+      socket.join(room);
+      console.log(`Socket ${socket.id} joined legacy room ${room}`);
+    } catch (e) {
+      console.warn('joinElection error', e?.message || e);
+    }
+  });
+
+  socket.on('leavePrediction', (electionId) => {
+    try {
+      const room = `prediction:${electionId}`;
+      socket.leave(room);
+      console.log(`Socket ${socket.id} left room ${room}`);
+    } catch (e) {
+      console.warn('leavePrediction error', e?.message || e);
+    }
+  });
+
+  socket.on('disconnect', (reason) => {
+    console.log('Socket disconnected:', socket.id, 'reason:', reason);
   });
 });
 

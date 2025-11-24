@@ -388,6 +388,18 @@ export const getPrediction = async (electionId) => {
   }
 };
 
+// Protected prediction endpoint for authenticated users (voter/admin)
+export const getElectionPredictions = async (electionId) => {
+  try {
+    const idPart = electionId ? `/${electionId}` : '';
+    const response = await api.get(`/predictions/election${idPart}`);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to fetch election predictions:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
 // Votes
 export const getVotes = async () => {
   try {
@@ -399,12 +411,27 @@ export const getVotes = async () => {
   }
 };
 
-export const castVote = async (voteData) => {
+export const castVote = async (electionId, candidateId) => {
   try {
-    const response = await api.post('/votes/cast', voteData);
+    const res = await api.post("/votes/cast", {
+      electionId,
+      candidateId
+    });
+    return res.data;
+  } catch (err) {
+    console.error("Failed to cast vote:", err);
+    throw err;
+  }
+};
+
+
+// Admin: get detailed votes per election (admin-only endpoint)
+export const getAdminVotes = async (electionId) => {
+  try {
+    const response = await api.get(`/admin/votes/${electionId}`);
     return response.data;
   } catch (error) {
-    console.error("Failed to cast vote:", error.response?.data || error.message);
+    console.error('Failed to fetch admin votes:', error.response?.data || error.message);
     throw error;
   }
 };

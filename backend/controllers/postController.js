@@ -4,6 +4,7 @@ const axios = require("axios");
 const Post = require("../models/Post");
 const Reaction = require("../models/Reaction");
 const Comment = require("../models/Comment");
+const { buildElectionPrediction } = require('../services/predictionPollService');
 
 const AI_PREDICTION_URL = process.env.AI_PREDICTION_URL;
 
@@ -151,6 +152,19 @@ exports.addReaction = async (req, res) => {
       // Increment reactions count
       await Post.updateOne({ _id: postId }, { $inc: { reactionsCount: 1 } });
 
+      // Recompute and emit predictions for the related election (best-effort)
+      try {
+        const post = await Post.findById(postId).lean();
+        const electionId = post?.election || post?.election_id || null;
+        if (electionId) {
+          const payload = await buildElectionPrediction({ electionId: String(electionId) });
+          const io = req.app.get('io');
+          if (io) io.to(`prediction:${String(electionId)}`).emit('prediction:update', payload);
+        }
+      } catch (e) {
+        console.warn('Prediction refresh failed after reaction:', e?.message || e);
+      }
+
       return res.json({ 
         success: true, 
         reactionId: reaction._id,
@@ -189,7 +203,7 @@ exports.addComment = async (req, res) => {
 
         const io = req.app.get("io");
         if (io) {
-          io.to(electionId.toString()).emit("prediction:update", resp.data);
+          io.to(`prediction:${String(electionId)}`).emit("prediction:update", resp.data);
         }
       } catch (err) {
         console.warn("AI refresh failed after comment:", err.message);
@@ -203,11 +217,16 @@ exports.addComment = async (req, res) => {
     // Comment event to frontend
     const io = req.app.get("io");
     if (io) {
-      io.emit("comment:created", {
-        postId,
-        userId,
-        text,
-      });
+      io.emit("comment:created", { postId, userId, text });
+      // Also emit prediction refresh via central service (best-effort)
+      try {
+        if (post?.election || post?.election_id) {
+          const payload = await buildElectionPrediction({ electionId: String(post.election || post.election_id) });
+          io.to(`prediction:${String(post.election || post.election_id)}`).emit('prediction:update', payload);
+        }
+      } catch (e) {
+        console.warn('Prediction refresh failed after comment emit:', e?.message || e);
+      }
     }
 
     return res.json({ 

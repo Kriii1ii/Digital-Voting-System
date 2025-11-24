@@ -1,5 +1,5 @@
 const mongoose=require('mongoose');
-const bcrypt=require('bcryptjs');
+const crypto = require('crypto');
 
 const voteSchema = new mongoose.Schema({
   voter: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -11,8 +11,13 @@ const voteSchema = new mongoose.Schema({
 
 // Pre-save: create a hash to simulate blockchain integrity
 voteSchema.pre('save', function (next) {
-  const data = this.voter + this.candidate + this.election + this.timestamp;
-  this.hash = crypto.createHash('sha256').update(data).digest('hex');
+  try {
+    const data = String(this.voter) + String(this.candidate) + String(this.election) + String(this.timestamp || this.createdAt || Date.now());
+    this.hash = crypto.createHash('sha256').update(data).digest('hex');
+  } catch (e) {
+    // don't block save on hashing failure
+    console.warn('Vote pre-save hash failed', e?.message || e);
+  }
   next();
 });
 

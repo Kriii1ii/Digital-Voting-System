@@ -31,6 +31,7 @@ import {
   castVote
 } from "../api/endpoints";
 import { useAuth } from "../contexts/AuthContext";
+import PredictionPoll from "../components/PredictionPoll";
 
 // NAVBAR 
 const Navbar = ({ setPage }) => {
@@ -417,11 +418,6 @@ const PostCard = ({ post, onReact, onComment, onEditComment, onDeleteComment, us
           <MessageCircle size={18} />
           <span>Comment</span>
         </button>
-
-        <button className="flex-1 flex items-center justify-center gap-2 px-2 py-2 rounded-lg hover:bg-gray-100 text-gray-600 transition">
-          <Share size={18} />
-          <span>Share</span>
-        </button>
       </div>
 
       {/* Comments Section */}
@@ -592,15 +588,20 @@ const FeedPage = () => {
   const loadPosts = async () => {
     try {
       setRefreshing(true);
-      const data = await getPosts();
-      console.log("Fetched posts from backend:", data);
+
+      const res = await getPosts();
+      // Handle different response shapes: {data: [...]}, {results: [...]}, or direct array
+      const raw = res?.data || res?.results || res || [];
+      console.log("Fetched posts from backend:", raw);
 
       // Ensure we have an array and properly initialize reactions and comments
-      const postsWithInteractions = Array.isArray(data) ? data.map(post => ({
-        ...post,
-        reactions: Array.isArray(post.reactions) ? post.reactions : [],
-        comments: Array.isArray(post.comments) ? post.comments : []
-      })) : [];
+      const postsWithInteractions = Array.isArray(raw)
+        ? raw.map((post) => ({
+            ...post,
+            reactions: Array.isArray(post.reactions) ? post.reactions : [],
+            comments: Array.isArray(post.comments) ? post.comments : [],
+          }))
+        : [];
 
       setPosts(postsWithInteractions);
     } catch (err) {
@@ -621,15 +622,17 @@ const FeedPage = () => {
       console.log("Adding reaction:", { postId, reaction });
 
       // Optimistic update
-      setPosts(prevPosts =>
-        prevPosts.map(post => {
+      setPosts((prevPosts) =>
+        prevPosts.map((post) => {
           if (post._id === postId) {
             // Remove existing reaction from this user if any
-            const filteredReactions = post.reactions.filter(r => r.user_id !== reaction.user_id);
+            const filteredReactions = post.reactions.filter(
+              (r) => r.user_id !== reaction.user_id
+            );
             // Add new reaction
             return {
               ...post,
-              reactions: [...filteredReactions, reaction]
+              reactions: [...filteredReactions, reaction],
             };
           }
           return post;
@@ -642,7 +645,7 @@ const FeedPage = () => {
 
       await loadPosts();
     } catch (err) {
-      console.error('Failed to add reaction:', err);
+      console.error("Failed to add reaction:", err);
       await loadPosts();
     }
   };
@@ -655,7 +658,7 @@ const FeedPage = () => {
       console.log("Comment response:", response);
       await loadPosts();
     } catch (err) {
-      console.error('Failed to add comment:', err);
+      console.error("Failed to add comment:", err);
       alert("Failed to add comment. Please try again.");
     }
   };
@@ -668,7 +671,7 @@ const FeedPage = () => {
       console.log("Edit comment response:", response);
       await loadPosts();
     } catch (err) {
-      console.error('Failed to edit comment:', err);
+      console.error("Failed to edit comment:", err);
       alert("Failed to edit comment. Please try again.");
     }
   };
@@ -680,7 +683,7 @@ const FeedPage = () => {
       console.log("Delete comment response:", response);
       await loadPosts();
     } catch (err) {
-      console.error('Failed to delete comment:', err);
+      console.error("Failed to delete comment:", err);
       alert("Failed to delete comment. Please try again.");
     }
   };
@@ -721,6 +724,11 @@ const FeedPage = () => {
         </div>
       </div>
 
+      {/* Prediction Poll visible to voters */}
+      <div className="mb-6">
+        <PredictionPoll electionId={null} refreshInterval={10000} />
+      </div>
+
       {postsLoading ? (
         <div className="text-center text-gray-500 py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-800 mx-auto mb-2"></div>
@@ -729,7 +737,9 @@ const FeedPage = () => {
       ) : posts.length === 0 ? (
         <div className="text-center text-gray-500 py-8 bg-white rounded-lg border border-gray-200">
           <p className="text-lg mb-2">No posts available yet</p>
-          <p className="text-sm text-gray-600">Candidates haven't posted anything recently.</p>
+          <p className="text-sm text-gray-600">
+            Candidates haven't posted anything recently.
+          </p>
         </div>
       ) : (
         posts.map((post) => (
@@ -747,6 +757,7 @@ const FeedPage = () => {
     </div>
   );
 };
+
 
 // PROFILE PAGE 
 const ProfilePage = () => {
@@ -1054,7 +1065,8 @@ const VoteNowPage = () => {
       const voteResponse = await castVote({
         electionId: elections[0]._id,
         candidateId: pendingCandidate._id,
-        voterId: user.id
+        voterId: user.voterId || user.VoterId
+
       });
 
       console.log("Vote response:", voteResponse);
@@ -1158,7 +1170,7 @@ const VoteNowPage = () => {
                 </h1>
                 <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
                   <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
-                    {selectedCandidateDetail.partyName || selectedCandidateDetail.party}
+                    {selectedCandidateDetail.partyName }
                   </span>
                 </div>
                 <p className="text-gray-600">{selectedCandidateDetail.position}</p>
@@ -1402,7 +1414,7 @@ const VoteNowPage = () => {
               </div>
 
               {/* Candidate Info */}
-              <h3 className="font-bold text-gray-800 text-xl mb-2">{candidate.fullName || candidate.name}</h3>
+              <h3 className="font-bold text-gray-800 text-xl mb-2">{candidate.fullName ?? candidate.name ?? "Unnamed Candidate"}</h3>
               <div className="mb-3">
                 <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
                   {candidate.partyName || candidate.party || "Independent"}

@@ -11,11 +11,7 @@ import {
   User,
   Edit,
   Trash2,
-  Plus,
   UserCheck,
-  Mail,
-  Calendar,
-  Hash,
   Search,
   ChevronLeft,
   ChevronRight,
@@ -31,18 +27,20 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import { 
+import {
   getAdminStats, 
   getWinningCandidates, 
   getVoters, 
   verifyVoter, 
   updateVoter, 
   deleteVoter,
-  addVoter,
-  getCandidates
+  getCandidates,
+  getElections,
+  getAdminVotes,
 } from "../api/endpoints";
 import LivePoll from "../components/LivePoll";
 import LivePollHero from "../components/LivePollHero";
+import PredictionPoll from "../components/PredictionPoll";
 import { useAuth } from "../contexts/AuthContext";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
@@ -142,7 +140,6 @@ const Pagination = React.memo(({
         >
           <ChevronRight className="w-4 h-4" />
         </button>
-        
         <button
           onClick={() => onPageChange(totalPages)}
           disabled={currentPage === totalPages}
@@ -428,7 +425,6 @@ const AdminDashboard = () => {
       setCandidateTotalPages(candidatesResponse.totalPages || 1);
       setCandidateCurrentPage(candidatesResponse.currentPage || page);
       
-      // NEW: Calculate overall statistics from all candidates (not just current page)
       const maleCount = candidatesResponse.results?.filter(c => c.gender === 'male').length || 0;
       const femaleCount = candidatesResponse.results?.filter(c => c.gender === 'female').length || 0;
       const otherCount = candidatesResponse.results?.filter(c => c.gender === 'other').length || 0;
@@ -661,9 +657,13 @@ const AdminDashboard = () => {
         {t("dashboard")}
       </h1>
 
-      <LivePollHero electionId={null} title="Live AI Winner Prediction" />
-      <div className="mb-6">
-        <LivePoll />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="md:col-span-2">
+          <LivePollHero electionId={null} title="Live AI Winner Prediction" />
+        </div>
+        <div className="md:col-span-1">
+          <PredictionPoll electionId={null} refreshInterval={10000} />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
@@ -741,13 +741,132 @@ const AdminDashboard = () => {
   );
 
   const VotesSection = () => (
-    <div className="space-y-6">
-      <h2 className="text-3xl font-bold text-indigo-500/90">Votes</h2>
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <p className="text-gray-600">Vote management features will be implemented here.</p>
-      </div>
-    </div>
+    <VotesPanel />
   );
+
+  // New: VotesPanel component implemented below to keep code organized
+  const VotesPanel = () => {
+    const [elections, setElections] = useState([]);
+    const [selectedElection, setSelectedElection] = useState(null);
+    const [votesLoading, setVotesLoading] = useState(false);
+    const [votesData, setVotesData] = useState({ election: null, results: [] });
+
+    useEffect(() => {
+      let mounted = true;
+      const loadElections = async () => {
+        try {
+          const list = await getElections();
+          if (!mounted) return;
+          setElections(list || []);
+          // choose active or latest
+          const active = (list || []).find((e) => e.status === 'active');
+          setSelectedElection(active ? (active._id || active.id) : (list[0]?._id || list[0]?.id || null));
+        } catch (err) {
+          console.error('Failed to load elections:', err);
+        }
+      };
+      loadElections();
+      return () => { mounted = false; };
+    }, []);
+
+    useEffect(() => {
+      if (!selectedElection) return;
+      let mounted = true;
+      const loadVotes = async () => {
+        setVotesLoading(true);
+        try {
+          const data = await getAdminVotes(selectedElection);
+          if (!mounted) return;
+          setVotesData(data || { election: null, results: [] });
+        } catch (err) {
+          console.error('Failed to load admin votes:', err);
+          setVotesData({ election: null, results: [] });
+        } finally {
+          if (mounted) setVotesLoading(false);
+        }
+      };
+      loadVotes();
+      return () => { mounted = false; };
+    }, [selectedElection]);
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-bold text-indigo-500/90">Votes</h2>
+          <div className="flex items-center gap-3">
+            <label className="text-sm text-gray-600">Election:</label>
+            <select
+              value={selectedElection || ''}
+              onChange={(e) => setSelectedElection(e.target.value)}
+              className="border rounded px-3 py-2"
+            >
+              <option value="">-- Select Election --</option>
+              {elections.map((el) => (
+                <option key={el._id || el.id} value={el._id || el.id}>
+                  {el.title || el.name || (`Election ${el._id || el.id}`)}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          {votesLoading ? (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-900"></div>
+              <p className="mt-2">Loading votes...</p>
+            </div>
+          ) : !votesData || !votesData.results || votesData.results.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No votes available for the selected election.</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <h3 className="text-xl font-semibold">{votesData.election?.title || 'Election Results'}</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {votesData.results.map((r) => (
+                  <div key={r.candidate?.id || r.candidate?.name} className="p-4 border rounded-lg">
+                    <div className="flex justify-between items-center mb-3">
+                      <div>
+                        <div className="font-semibold text-lg">{r.candidate?.name || 'Unknown Candidate'}</div>
+                        <div className="text-sm text-gray-500">{r.candidate?.party || ''}</div>
+                      </div>
+                      <div className="text-2xl font-bold text-indigo-600">{r.votes}</div>
+                    </div>
+                    <div className="text-sm text-gray-600">Voters:</div>
+                    <div className="mt-2 max-h-40 overflow-auto">
+                      <table className="w-full text-left text-sm">
+                        <thead>
+                          <tr className="text-gray-500 text-xs">
+                            <th className="py-1">Name</th>
+                            <th className="py-1">Email</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {r.voters && r.voters.length ? (
+                            r.voters.map((v, idx) => (
+                              <tr key={idx} className="border-t">
+                                <td className="py-1">{v?.fullName || v?.full_name || 'Unknown'}</td>
+                                <td className="py-1 text-gray-600">{v?.email || 'N/A'}</td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={2} className="py-2 text-gray-500">No voters listed</td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   const VoterManagementSection = () => (
     <div className="space-y-6">

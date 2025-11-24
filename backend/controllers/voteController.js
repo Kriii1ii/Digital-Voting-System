@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
-const { io } = require('../server.js');
 const Vote = require('../models/Vote.js');
 const Election = require('../models/Election.js');
 const Candidate = require('../models/Candidate.js');
+const { buildElectionPrediction } = require('../services/predictionPollService.js');
 
 // --- Utility Functions ---
 
@@ -98,11 +98,27 @@ const castVote = async (req, res) => {
     }
 
     // Validate candidate belongs to this election
-    const candidate = await Candidate.findOne({ _id: candidateId, election: electionId });
+    const candidate = await Candidate.findById(candidateId).lean();
     if (!candidate) {
-      return res
-        .status(400)
-        .json({ success: false, message: 'Invalid candidate for this election' });
+      return res.status(404).json({ success: false, message: 'Candidate not found', candidateId });
+    }
+
+    // Check that candidate has an election link
+    const candidateElectionId = candidate.election_id || (candidate.election ? String(candidate.election) : null);
+    if (!candidateElectionId) {
+      console.error('Attempt to vote for candidate without election link', { candidateId, candidateName: candidate.fullName || candidate.name });
+      return res.status(400).json({
+        success: false,
+        message: 'Candidate is not linked to any election',
+        candidateId,
+        candidateName: candidate.fullName || candidate.name || null,
+        candidateElectionId: null,
+        suggestion: 'Run migrations/admin repair to link candidates to elections.'
+      });
+    }
+
+    if (String(candidateElectionId) !== String(electionId)) {
+      return res.status(400).json({ success: false, message: 'Candidate does not belong to the provided election', candidateId, candidateElectionId });
     }
 
     // Prevent duplicate vote (user can only vote once per election)
@@ -121,9 +137,24 @@ const castVote = async (req, res) => {
 
     // Recompute tally & broadcast live updates via Socket.IO
     const tally = await computeTally(electionId);
-    const room = String(electionId);
-    io.to(room).emit('leaderboard:update', tally);      // namespaced event
-    io.to(room).emit('leaderboardUpdate', tally);       // backward compatibility
+    // prefer getting io from the express app to avoid circular imports
+    const ioInstance = req?.app?.get && req.app.get('io');
+    const leaderboardRoom = String(electionId);
+    if (ioInstance) {
+      ioInstance.to(leaderboardRoom).emit('leaderboard:update', tally); // namespaced event
+      ioInstance.to(leaderboardRoom).emit('leaderboardUpdate', tally);  // backward compatibility
+    }
+
+    // Also build and emit the AI-based prediction payload to the standardized prediction room
+    try {
+      const prediction = await buildElectionPrediction({ electionId });
+      const predRoom = `prediction:${electionId}`;
+      if (ioInstance) {
+        ioInstance.to(predRoom).emit('prediction:update', prediction);
+      }
+    } catch (emitErr) {
+      console.warn('Failed to build/emit prediction after vote:', emitErr?.message || emitErr);
+    }
 
     return res
       .status(201)

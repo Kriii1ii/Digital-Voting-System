@@ -2,7 +2,12 @@ const { buildElectionPrediction } = require("../services/predictionPollService.j
 
 async function getElectionPredictionPoll(req, res) {
   try {
-    const { electionId } = req.query;
+    const electionId = req.params.electionId || req.query.electionId || null;
+
+    // Role-based behavior: candidate accounts should not receive poll data
+    if (req.user && req.user.role === 'candidate') {
+      return res.status(204).send();
+    }
     const payload = await buildElectionPrediction({ electionId });
 
     if (!payload.candidates.length) {

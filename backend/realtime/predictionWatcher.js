@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
-const axios = require('axios');
-
+const { buildElectionPrediction } = require('../services/predictionPollService');
 const AI_PREDICTION_URL = process.env.AI_PREDICTION_URL || 'http://localhost:8000';
 const DEFAULT_ELECTION_ID = process.env.ELECTION_ID || null;
 const DEBOUNCE_MS = Number(process.env.PREDICTION_DEBOUNCE_MS || 30000);
@@ -38,15 +37,12 @@ async function fetchAndEmit(io, electionId) {
   if (!electionId) return;
 
   try {
-    const url = `${AI_PREDICTION_URL.replace(/\/$/, '')}/predict?election_id=${encodeURIComponent(electionId)}`;
-    const resp = await axios.get(url, { timeout: 10000 });
-    const data = resp.data;
-    // Emit to the room named by electionId
-    // consumers may join room with the raw electionId
-    io.to(electionId).emit('prediction:update', data);
-    // also emit a generic channel
-    io.emit('prediction:update', { electionId, data });
-    console.log(`📢 Emitted prediction update for election=${electionId}`);
+      // Use centralized prediction service which aggregates and calls AI/fallback
+      const payload = await buildElectionPrediction({ electionId });
+      const room = `prediction:${electionId}`;
+      io.to(room).emit('prediction:update', payload);
+      io.emit('prediction:update', { electionId, payload });
+      console.log(`📢 Emitted prediction update for election=${electionId} -> room=${room}`);
   } catch (err) {
     console.error('❌ Error fetching predictions from AI service:', err.message || err);
   }
@@ -80,7 +76,7 @@ async function initPredictionWatcher(io) {
   }
 
   const db = mongoose.connection;
-  const collectionsToWatch = ['reactions', 'comments', 'posts'];
+  const collectionsToWatch = ['reactions', 'comments', 'posts', 'poll_interactions', 'poll_votes'];
 
   collectionsToWatch.forEach((collectionName) => {
     try {

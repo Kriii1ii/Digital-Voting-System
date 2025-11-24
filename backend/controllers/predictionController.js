@@ -182,61 +182,35 @@ async function buildEngagementPayload(db, electionId) {
 // ---- Controller: internal (AI + fallback) -----------------------------------
 async function getPrediction(req, res) {
   const electionId = req.params.electionId;
-  if (!electionId) return res.status(400).json({ error: "missing electionId" });
+  if (!electionId) return res.status(400).json({ error: 'missing electionId' });
 
-  const AI_URL = process.env.AI_PREDICTION_URL || "http://localhost:8000/predict";
+  // Role-based: do not serve prediction to candidate accounts
+  if (req.user && req.user.role === 'candidate') {
+    return res.status(204).send();
+  }
+
   try {
-    const db = mongoose.connection.db;
-    const payload = await buildEngagementPayload(db, electionId);
+    const payload = await require('../services/predictionPollService').buildElectionPrediction({ electionId });
 
-    if (!payload.candidates || payload.candidates.length === 0) {
-      return res.status(404).json({ message: "No candidate engagement found for this election" });
-    }
-
-    // Try AI service first with a rich payload. If it fails, fall back to heuristic.
+    // Best-effort emit to socket room for connected clients
     try {
-      const resp = await retry(
-        () =>
-          axios.post(
-            AI_URL,
-            { election_id: electionId, candidates: payload.candidates },
-            { timeout: 8000 }
-          ),
-        3,
-        300
-      );
-
-      const out = {
-        electionId,
-        computedAt: new Date().toISOString(),
-        usedFallback: false,
-        model_meta: resp.data?.model_meta ?? null,
-        totals: resp.data?.totals ?? { candidates: payload.candidates.length },
-        predictions: resp.data?.predictions ?? [],
-      };
-
-      // emit socket update (best-effort)
-      try {
-        const io = req.app.get("io");
-        if (io) io.to(`election_${electionId}`).emit("prediction:update", out);
-      } catch (_) {}
-
-      return res.json(out);
-    } catch (err) {
-      console.warn("AI service call failed, using local heuristic:", err.message || err);
-      const out = computeLocalHeuristic(payload.candidates);
-      out.electionId = electionId;
-
-      try {
-        const io = req.app.get("io");
-        if (io) io.to(`election_${electionId}`).emit("prediction:update", out);
-      } catch (_) {}
-
-      return res.json(out);
+      const io = req.app.get('io');
+      if (io) {
+        const room = `prediction:${electionId}`;
+        io.to(room).emit('prediction:update', payload);
+      }
+    } catch (e) {
+      console.warn('Failed to emit prediction:update via socket:', e?.message || e);
     }
+
+    if (!payload || !payload.candidates || payload.candidates.length === 0) {
+      return res.status(404).json({ message: 'No candidate engagement found for this election' });
+    }
+
+    return res.json(payload);
   } catch (err) {
-    console.error("prediction error:", err.message || err);
-    return res.status(500).json({ error: "prediction failed", details: err.message || err });
+    console.error('prediction error:', err.message || err);
+    return res.status(500).json({ error: 'prediction failed', details: err.message || err });
   }
 }
 
