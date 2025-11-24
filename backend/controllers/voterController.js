@@ -18,22 +18,25 @@ const getAllVoters = async (req, res) => {
       ];
     }
 
-    // Registered filter
     if (registered === "true") filter.hasRegistered = true;
     if (registered === "false") filter.hasRegistered = false;
 
-    // Total count for pagination
-    const totalVoters = await Voter.countDocuments(filter);
-
-    // Actual paginated results
+    // PAGINATED RESULT
     const voters = await Voter.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
 
+    // FIX: Count full totals (NOT paginated)
+    const totalVoters = await Voter.countDocuments(filter);
+    const totalVerified = await Voter.countDocuments({ ...filter, verified: true });
+    const totalPending = await Voter.countDocuments({ ...filter, verified: false });
+
     return res.json({
       success: true,
       totalVoters,
+      totalVerified,
+      totalPending,
       totalPages: Math.ceil(totalVoters / limit),
       currentPage: page,
       results: voters
@@ -43,6 +46,7 @@ const getAllVoters = async (req, res) => {
     return res.status(500).json({ success: false, message: "Server Error" });
   }
 };
+
 
 
 // Verify voter
