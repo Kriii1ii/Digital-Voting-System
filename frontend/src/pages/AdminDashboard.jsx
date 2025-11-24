@@ -11,11 +11,7 @@ import {
   User,
   Edit,
   Trash2,
-  Plus,
   UserCheck,
-  Mail,
-  Calendar,
-  Hash,
   Search,
   ChevronLeft,
   ChevronRight,
@@ -38,7 +34,6 @@ import {
   verifyVoter, 
   updateVoter, 
   deleteVoter,
-  addVoter,
   getCandidates
 } from "../api/endpoints";
 import LivePoll from "../components/LivePoll";
@@ -142,7 +137,6 @@ const Pagination = React.memo(({
         >
           <ChevronRight className="w-4 h-4" />
         </button>
-        
         <button
           onClick={() => onPageChange(totalPages)}
           disabled={currentPage === totalPages}
@@ -428,7 +422,6 @@ const AdminDashboard = () => {
       setCandidateTotalPages(candidatesResponse.totalPages || 1);
       setCandidateCurrentPage(candidatesResponse.currentPage || page);
       
-      // NEW: Calculate overall statistics from all candidates (not just current page)
       const maleCount = candidatesResponse.results?.filter(c => c.gender === 'male').length || 0;
       const femaleCount = candidatesResponse.results?.filter(c => c.gender === 'female').length || 0;
       const otherCount = candidatesResponse.results?.filter(c => c.gender === 'other').length || 0;

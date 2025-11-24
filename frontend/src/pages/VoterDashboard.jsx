@@ -417,11 +417,6 @@ const PostCard = ({ post, onReact, onComment, onEditComment, onDeleteComment, us
           <MessageCircle size={18} />
           <span>Comment</span>
         </button>
-
-        <button className="flex-1 flex items-center justify-center gap-2 px-2 py-2 rounded-lg hover:bg-gray-100 text-gray-600 transition">
-          <Share size={18} />
-          <span>Share</span>
-        </button>
       </div>
 
       {/* Comments Section */}
@@ -1158,7 +1153,7 @@ const VoteNowPage = () => {
                 </h1>
                 <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
                   <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
-                    {selectedCandidateDetail.partyName || selectedCandidateDetail.party}
+                    {selectedCandidateDetail.partyName }
                   </span>
                 </div>
                 <p className="text-gray-600">{selectedCandidateDetail.position}</p>
