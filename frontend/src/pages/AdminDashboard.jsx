@@ -41,8 +41,7 @@ import {
   addVoter,
   getCandidates
 } from "../api/endpoints";
-import LivePoll from "../components/LivePoll";
-import LivePollHero from "../components/LivePollHero";
+import PredictionPollCard from "../components/PredictionPollCard";
 import { useAuth } from "../contexts/AuthContext";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
@@ -661,9 +660,8 @@ const AdminDashboard = () => {
         {t("dashboard")}
       </h1>
 
-      <LivePollHero electionId={null} title="Live AI Winner Prediction" />
       <div className="mb-6">
-        <LivePoll />
+        <PredictionPollCard title="Election Prediction Poll" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">

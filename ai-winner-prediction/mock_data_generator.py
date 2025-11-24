@@ -1,5 +1,5 @@
 # mock_data_generator.py
-# Generates multiple synthetic election datasets (candidates, posts, engagements, comments)
+# Generates multiple synthetic election datasets (candidates, posts, engagements, comments
 # and inserts them into an in-memory mongomock DB, then saves everything as JSON.
 
 import random

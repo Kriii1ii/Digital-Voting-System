@@ -31,6 +31,7 @@ import {
   castVote
 } from "../api/endpoints";
 import { useAuth } from "../contexts/AuthContext";
+import PredictionPollCard from "../components/PredictionPollCard";
 
 // NAVBAR 
 const Navbar = ({ setPage }) => {
@@ -719,6 +720,10 @@ const FeedPage = () => {
             Welcome, {user?.fullName}
           </h1>
         </div>
+      </div>
+
+      <div className="mb-6">
+        <PredictionPollCard title="AI Election Prediction" />
       </div>
 
       {postsLoading ? (

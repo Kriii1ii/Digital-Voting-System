@@ -21,6 +21,7 @@ events.defaultMaxListeners = 20; // or 0 for unlimited, but 20 is safer
 const electionRoutes = require('./routes/election.js');
 const resultsRoutes = require('./routes/results.js');
 const predictionRoutes = require('./routes/prediction.js');
+const predictionsRoutes = require('./routes/predictions.js');
 const authRoutes = require('./routes/auth.js');
 const candidateRoutes = require('./routes/candidate.js');
 const VoterRoutes = require('./routes/voter.js');
@@ -132,6 +133,7 @@ app.use('/api/candidates', candidateRoutes);
 app.use('/api/elections', electionRoutes);
 app.use('/api/results', resultsRoutes);
 app.use('/api/prediction', predictionRoutes);
+app.use('/api/predictions', predictionsRoutes);
 app.use('/api/voters', VoterRoutes);
 app.use('/api/votes', VoteRoutes);
 // Biometric API mount

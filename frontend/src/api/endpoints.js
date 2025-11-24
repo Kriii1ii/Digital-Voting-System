@@ -388,6 +388,21 @@ export const getPrediction = async (electionId) => {
   }
 };
 
+export const getElectionPredictionSummary = async (electionId) => {
+  try {
+    const params = {};
+    if (electionId) params.electionId = electionId;
+    const response = await api.get("/predictions/election", { params });
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Failed to fetch election prediction poll:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};
+
 // Votes
 export const getVotes = async () => {
   try {
