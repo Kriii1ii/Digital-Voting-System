@@ -1,5 +1,3 @@
-// backend/server.js
-// Third-party Libraries
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -71,11 +69,11 @@ app.use(
         return callback(null, true);
       }
 
-      console.warn("❌ CORS BLOCKED ORIGIN:", origin, "Allowed:", FRONTEND_URLS);
+      console.warn("CORS BLOCKED ORIGIN:", origin, "Allowed:", FRONTEND_URLS);
       return callback(new Error("Not allowed by CORS"));
     },
 
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "PATCH","DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
     preflightContinue: false,
