@@ -22,7 +22,7 @@ const Registration = () => {
     email: "",
     password: "",
     confirmPassword: "",
-    idType: "citizenship",
+    idType: "national",
     idNumber: "",
     voterId: "",
     province: "",
@@ -371,9 +371,8 @@ const Registration = () => {
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-all"
                   >
-                    <option value="citizenship">{t("citizenship")}</option>
                     <option value="national">{t("national")}</option>
-                    <option value="passport">{t("passport")}</option>
+                    
                   </select>
                 </div>
 
