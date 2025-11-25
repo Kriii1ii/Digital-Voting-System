@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
+// ...existing code...
+
+// ...existing code...
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../contexts/LanguageContext";
 import {
@@ -28,11 +31,11 @@ import {
   Legend,
 } from "chart.js";
 import {
-  getAdminStats, 
-  getWinningCandidates, 
-  getVoters, 
-  verifyVoter, 
-  updateVoter, 
+  getAdminStats,
+  getWinningCandidates,
+  getVoters,
+  verifyVoter,
+  updateVoter,
   deleteVoter,
   getCandidates,
   getElections,
@@ -514,7 +517,7 @@ const AdminDashboard = () => {
     alert(`More details about ${type} will appear here later.`);
   };
 
-  // Voter Management Functions
+ 
   const handleVerifyVoter = async (voterId) => {
     if (!window.confirm("Are you sure you want to verify this voter?")) {
       return;
