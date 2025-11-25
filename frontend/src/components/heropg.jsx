@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import Chatbot from "./Chatbot";
+import Chatbot from "./chatbot";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useAuth } from "../contexts/AuthContext";
