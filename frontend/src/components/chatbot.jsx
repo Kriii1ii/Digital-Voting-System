@@ -9,70 +9,154 @@ export default function Chatbot(){
   const openedOnce = useRef(false);
 
 const qa = new Map([
-  ['how do i register to vote?', 'You can register for digital voting through the Election Commission Nepal website (election.gov.np) or visit your local ward office. For digital voting, you will need to complete both document verification and facial registration.'],
-['how do i register to vote', 'You can register for digital voting through the Election Commission Nepal website (election.gov.np) or visit your local ward office. For digital voting, you will need to complete both document verification and facial registration.'],
-['what documents do i need?', 'For digital voting in Nepal, you need your Citizenship Certificate and a registered mobile number. During face registration, you will also need to provide biometric data at designated centers.'],
-['what documents do i need', 'For digital voting in Nepal, you need your Citizenship Certificate and a registered mobile number. During face registration, you will also need to provide biometric data at designated centers.'],
-['when is the election?', 'Election dates in Nepal are announced by the Election Commission. You can check the official schedule at election.gov.np or through the NayaMat voting app. Digital voting periods are the same as traditional voting.'],
-['how does online voting work?', 'Nepal\'s digital voting system uses secure authentication with face recognition. After verification, you can cast your vote through authorized digital platforms. The system ensures your vote is encrypted and anonymous.'],
-['is my vote secure?', 'Yes! Our digital voting system uses end-to-end encryption, blockchain technology, and facial recognition to ensure complete security. Your vote remains anonymous and cannot be traced back to you.']
-  ,
-  // Nepal-specific questions (matched format)
-  ['where can i register to vote in nepal?', 'You can register at your local Ward Office, Election Commission Nepal offices, or designated voter registration centers. Online pre-registration is also available through the Election Commission of Nepal website.'],
-  ['where can i register to vote in nepal', 'You can register at your local Ward Office, Election Commission Nepal offices, or designated voter registration centers. Online pre-registration is also available through the Election Commission of Nepal website.'],
-  ['what documents needed for voting in nepal?', 'For Nepal: Citizenship Certificate or valid passport, and recent photo. If using face recognition, you need to complete biometric registration first at your local election office.'],
-  ['what documents needed for voting in nepal', 'For Nepal: Citizenship Certificate or valid passport, and recent photo. If using face recognition, you need to complete biometric registration first at your local election office.'],
-  ['voting age in nepal?', 'The voting age in Nepal is 18 years. You must be a Nepali citizen and registered in the voter list of your constituency.'],
-  ['voting age in nepal', 'The voting age in Nepal is 18 years. You must be a Nepali citizen and registered in the voter list of your constituency.'],
-  ['election commission nepal contact?', 'Election Commission Nepal: Phone: 01-4780200, Website: www.election.gov.np, Email: info@election.gov.np. Office located in Kantipath, Kathmandu.'],
-  ['election commission nepal contact', 'Election Commission Nepal: Phone: 01-4780200, Website: www.election.gov.np, Email: info@election.gov.np. Office located in Kantipath, Kathmandu.'],
-  ['when is next election in nepal?', 'Election dates are announced by the Election Commission. Check www.election.gov.np for the latest schedule. Typically, local elections happen every 5 years.'],
-  ['when is next election in nepal', 'Election dates are announced by the Election Commission. Check www.election.gov.np for the latest schedule. Typically, local elections happen every 5 years.'],
-  
-  // Face recognition specific questions
-  ['how does face recognition voting work?', 'Our system uses your registered facial data for secure authentication. During voting, the camera captures your face, matches it with our secure database, and verifies your identity instantly without passwords or IDs.'],
-  ['how does face recognition voting work', 'Our system uses your registered facial data for secure authentication. During voting, the camera captures your face, matches it with our secure database, and verifies your identity instantly without passwords or IDs.'],
-  ['is face recognition secure for voting?', 'Yes! We use advanced encryption and store only mathematical face templates, not actual photos. The system includes liveness detection to prevent spoofing and all data is protected with multiple security layers.'],
-  ['is face recognition secure for voting', 'Yes! We use advanced encryption and store only mathematical face templates, not actual photos. The system includes liveness detection to prevent spoofing and all data is protected with multiple security layers.'],
-  ['how to register face for voting?', 'Visit your local election office with your citizenship certificate. Our staff will guide you through the quick face registration process - it takes about 2 minutes and requires looking at the camera from different angles.'],
-  ['how to register face for voting', 'Visit your local election office with your citizenship certificate. Our staff will guide you through the quick face registration process - it takes about 2 minutes and requires looking at the camera from different angles.'],
-  ['what if face recognition fails?', 'If face recognition fails, you can use alternative verification: show your citizenship certificate and verified mobile OTP. Our staff will assist you and update your facial data if needed.'],
-  ['what if face recognition fails', 'If face recognition fails, you can use alternative verification: show your citizenship certificate and verified mobile OTP. Our staff will assist you and update your facial data if needed.'],
-  ['can i update my face data?', 'Yes! Visit any election office to update your facial data. This is recommended if you have significant appearance changes, or if you experience recognition issues during voting.'],
-  ['can i update my face data', 'Yes! Visit any election office to update your facial data. This is recommended if you have significant appearance changes, or if you experience recognition issues during voting.'],
-  ['is face recognition mandatory?', 'No, it is optional but recommended for faster, more secure voting. Traditional methods with citizenship certificate and verification are always available as backup.'],
-  ['is face recognition mandatory', 'No, it is optional but recommended for faster, more secure voting. Traditional methods with citizenship certificate and verification are always available as backup.'],
-  
-  // Digital voting system questions
-  ['how to vote online in nepal?', 'Currently, online voting is available through secure designated centers with face authentication. Fully remote online voting is being tested and will be announced by the Election Commission when available.'],
-  ['how to vote online in nepal', 'Currently, online voting is available through secure designated centers with face authentication. Fully remote online voting is being tested and will be announced by the Election Commission when available.'],
-  ['is digital voting safe in nepal?', 'Yes, our digital voting uses end-to-end encryption, blockchain verification for vote integrity, and multiple authentication layers including face recognition for maximum security.'],
-  ['is digital voting safe in nepal', 'Yes, our digital voting uses end-to-end encryption, blockchain verification for vote integrity, and multiple authentication layers including face recognition for maximum security.'],
-  ['how are votes counted digitally?', 'Votes are encrypted immediately after casting, stored securely, and counted automatically with real-time verification. The system provides instant results while maintaining voter anonymity.'],
-  ['how are votes counted digitally', 'Votes are encrypted immediately after casting, stored securely, and counted automatically with real-time verification. The system provides instant results while maintaining voter anonymity.'],
-  ['can i verify my vote was counted?', 'Yes! After voting, you receive a unique encrypted receipt code. You can verify your vote was counted (without seeing how you voted) through the Election Commission verification portal.'],
-  ['can i verify my vote was counted', 'Yes! After voting, you receive a unique encrypted receipt code. You can verify your vote was counted (without seeing how you voted) through the Election Commission verification portal.'],
-  
-  // Registration process
-  ['how to check voter registration status?', 'Visit www.election.gov.np/voter-status and enter your citizenship number, or SMS your citizenship number to 980-980-0000 to check your registration status.'],
-  ['how to check voter registration status', 'Visit www.election.gov.np/voter-status and enter your citizenship number, or SMS your citizenship number to 980-980-0000 to check your registration status.'],
-  ['voter registration deadline nepal?', 'Registration deadlines are announced before each election. Typically, registration closes 35 days before election day. Check the Election Commission website for exact dates.'],
-  ['voter registration deadline nepal', 'Registration deadlines are announced before each election. Typically, registration closes 35 days before election day. Check the Election Commission website for exact dates.'],
-  ['can i vote from different location?', 'Yes, with prior registration for absentee voting. You must apply for voter transfer at least 15 days before election day at your local election office.'],
-  ['can i vote from different location', 'Yes, with prior registration for absentee voting. You must apply for voter transfer at least 15 days before election day at your local election office.'],
-  
-  // Technical issues
-  ['what if internet connection fails during voting?', 'Our systems have offline capability and backup power. Your voting session is saved locally and syncs when connection restores. In case of prolonged outage, extended voting hours are announced.'],
-  ['what if internet connection fails during voting', 'Our systems have offline capability and backup power. Your voting session is saved locally and syncs when connection restores. In case of prolonged outage, extended voting hours are announced.'],
-  ['how to report voting system problem?', 'Immediately notify polling station staff or call Election Commission helpline: 980-980-0001. Technical support teams are available at all voting centers.'],
-  ['how to report voting system problem', 'Immediately notify polling station staff or call Election Commission helpline: 980-980-0001. Technical support teams are available at all voting centers.'],
-  
-  // Accessibility
-  ['voting options for disabled voters?', 'We provide braille ballots, wheelchair access, audio voting assistance, and staff support. Face recognition also helps voters with mobility challenges who cannot handle physical documents.'],
-  ['voting options for disabled voters', 'We provide braille ballots, wheelchair access, audio voting assistance, and staff support. Face recognition also helps voters with mobility challenges who cannot handle physical documents.'],
-  ['can illiterate people use digital voting?', 'Yes! Our system has audio guidance in Nepali and local languages, pictorial candidate selection, and staff assistance to ensure everyone can vote independently and securely.'],
-  ['can illiterate people use digital voting', 'Yes! Our system has audio guidance in Nepali and local languages, pictorial candidate selection, and staff assistance to ensure everyone can vote independently and securely.']
+  // -----------------------------------------
+  // Registration
+  // -----------------------------------------
+  ['how do i register to vote?', 
+   'To register, create an account in the app, verify your ID, and complete face registration. Once approved, you can vote in active elections.'],
+
+  ['what documents do i need?', 
+   'You need a valid government ID (citizenship, license, or passport) and a working mobile number for OTP verification.'],
+
+  ['who can register to vote?', 
+   'Anyone with a valid account and verified identity can register. Age requirements and rules depend on the election settings created by admins.'],
+
+  ['how long does registration take?', 
+   'Registration is usually approved within a few minutes unless manual review is required.'],
+
+  ['can i register multiple times?', 
+   'No. One account per person is allowed. Duplicate accounts are automatically blocked.'],
+
+  ['can i update my details?', 
+   'Yes, you can update your personal information from your profile. Some fields may require verification again.'],
+
+  // -----------------------------------------
+  // Face Recognition
+  // -----------------------------------------
+  ['how does face recognition work?', 
+   'The system compares your live camera scan with your registered face template. If it matches, you are allowed to vote.'],
+
+  ['is face recognition mandatory?', 
+   'Yes, face verification is required to ensure secure one-person-one-vote access.'],
+
+  ['what if my face is not recognized?', 
+   'Try scanning in good lighting and keep your face centered. If it still fails, you can update your face data in the app.'],
+
+  ['can i update my face data?', 
+   'Yes, you can re-register your face from your profile if you face recognition issues.'],
+
+  // -----------------------------------------
+  // About elections
+  // -----------------------------------------
+  ['when is the election?', 
+   'Election dates are set by the admin. You can view active and upcoming elections inside the app under “Current Elections.”'],
+
+  ['what is the voting period?', 
+   'The voting period is decided by the admin. You can vote anytime during the active period. Once it closes, no votes can be cast.'],
+
+  ['can i vote after the election ends?', 
+   'No. Votes are accepted only during the active election period.'],
+
+  // -----------------------------------------
+  // Winner Prediction
+  // -----------------------------------------
+  ['when does winner prediction close?', 
+   'Winner prediction closes 3 days before the main election begins. After that, predictions cannot be submitted or changed.'],
+
+  ['can i change my prediction?', 
+   'Yes, you can change your prediction anytime before the prediction deadline. After it closes, predictions are locked.'],
+
+  // -----------------------------------------
+  // Voting Process
+  // -----------------------------------------
+  ['how do I vote?', 
+   'During the election period, open the app, complete face verification, choose your candidate, and submit your vote.'],
+
+  ['is my vote anonymous?', 
+   'Yes. Your identity is verified only for eligibility. The final vote is stored anonymously and cannot be linked back to you.'],
+
+  ['can i vote from anywhere?', 
+   'Yes. You can vote from any device with internet access unless the admin has set location restrictions.'],
+
+  ['can i change my vote later?', 
+   'No. Once submitted, votes cannot be altered.'],
+
+  ['how many times can i vote?', 
+   'Only once per election. The system blocks duplicate voting attempts.'],
+
+  // -----------------------------------------
+  // Vote Counting & Results
+  // -----------------------------------------
+  ['how are votes counted?', 
+   'Votes are counted automatically by the system when the election ends. Results are calculated instantly.'],
+
+  ['when are results announced?', 
+   'Results are visible immediately after the election closes unless the admin has enabled delayed result mode.'],
+
+  ['can i check if my vote was counted?', 
+   'Yes. You receive a confirmation token after voting, which you can use to verify that your vote was recorded.'],
+
+  // -----------------------------------------
+  // Security
+  // -----------------------------------------
+  ['is digital voting secure?', 
+   'Yes. Our system uses encryption, secure authentication, and biometric verification to protect your vote.'],
+
+  ['how is my data protected?', 
+   'All personal data and face templates are encrypted and stored securely. Raw photos are never saved.'],
+
+  ['what if someone tries to vote using my account?', 
+   'They cannot vote without completing face verification, which ensures only you can cast your vote.'],
+
+  // -----------------------------------------
+  // App & Technical Issues
+  // -----------------------------------------
+  ['what if the app crashes?', 
+   'Restart the app and log in again. If the crash happened before submitting your vote, you can still vote.'],
+
+  ['what if internet fails during voting?', 
+   'If your vote was not submitted, you can retry once your connection stabilizes. If it was submitted, it is already counted.'],
+
+  ['why am i not seeing the election?', 
+   'You might not be eligible, or the election has not started yet. Check the Elections tab for details.'],
+
+  ['how to report a problem?', 
+   'Use the “Help & Support” section in the app to contact support.'],
+
+  // -----------------------------------------
+  // Prediction & Extra Features
+  // -----------------------------------------
+  ['what is winner prediction?', 
+   'Winner prediction allows users to guess the winning candidate before the election begins. This feature closes 3 days before voting starts.'],
+
+  ['is prediction required?', 
+   'No. It is optional and purely for engagement. It does not affect the real election.'],
+
+  ['can i see other users’ predictions?', 
+   'No. Predictions remain private until the election ends.'],
+
+  // -----------------------------------------
+  // Eligibility & Rules
+  // -----------------------------------------
+  ['who is eligible to vote?', 
+   'Anyone with a verified account and who is marked eligible by the admin for that specific election.'],
+
+  ['why am i not eligible to vote?', 
+   'You may not meet election criteria or your registration is pending approval. Check your profile for status.'],
+
+  ['can i participate in multiple elections?', 
+   'Yes, as long as you are eligible for each election.'],
+
+  // -----------------------------------------
+  // Misc
+  // -----------------------------------------
+  ['what is this app for?', 
+   'This is a digital voting platform that allows users to register, authenticate using face recognition, predict winners, and vote securely.'],
+
+  ['is this an official government system?', 
+   'No. This is a private digital voting system created for projects, demos, or organizational use—not an official government platform.']
 ]);
+
 
   useEffect(()=>{
     // keep scrolled to bottom
