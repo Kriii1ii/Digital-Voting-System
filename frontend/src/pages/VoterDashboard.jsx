@@ -1092,13 +1092,10 @@ const VoteNowPage = () => {
         electionTitle: activeElection.title
       });
 
-      const voteResponse = await castVote({
-
-        electionId: activeElection._id,
-        candidateId: candidate._id,
-        voterId: user.id
-
-      });
+      const voteResponse = await castVote(
+  activeElection._id,
+  candidate._id
+);
 
       console.log("Vote response:", voteResponse);
 

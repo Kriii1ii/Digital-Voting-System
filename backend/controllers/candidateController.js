@@ -1,9 +1,21 @@
 const Candidate = require('../models/Candidate.js');
+const Election = require('../models/Election.js');   // ⭐ ADD THIS
 const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
 const paginate = require('../utils/paginate.js');
 
-// Add new candidate
+
+// ⭐ HELPER: Find active election automatically
+async function getActiveElection() {
+  return await Election.findOne({
+    status: { $in: ["ongoing", "open"] }
+  });
+}
+
+
+// ---------------------------
+// ADD NEW CANDIDATE (ADMIN)
+// ---------------------------
 const addCandidate = async (req, res) => {
   try {
     const {
@@ -30,7 +42,16 @@ const addCandidate = async (req, res) => {
       return res.status(400).json({ message: 'Email already used by another candidate.' });
     }
 
-    // Hash the password
+    // ⭐ Auto get active election
+    const activeElection = await getActiveElection();
+    if (!activeElection) {
+      return res.status(400).json({
+        success: false,
+        message: 'No active election available. Create or activate an election first.'
+      });
+    }
+
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const candidate = new Candidate({
@@ -44,20 +65,33 @@ const addCandidate = async (req, res) => {
       position,
       photo: photo || '',
       politicalSign: politicalSign || '',
-      createdBy: req.user ? req.user._id : null // optional: set after auth
+      createdBy: req.user ? req.user._id : null,
+
+      // ⭐ AUTO-ASSIGN ACTIVE ELECTION
+      election: activeElection._id,
+      election_id: String(activeElection._id)
     });
 
     await candidate.save();
+
     res.status(201).json({
-      message: 'Candidate added successfully!',
-      candidate
+      success: true,
+      message: 'Candidate added and linked to the active election.',
+      candidate,
+      assignedElection: activeElection
     });
+
   } catch (error) {
     console.error('Error adding candidate:', error);
     res.status(500).json({ message: 'Server error. Please try again.' });
   }
 };
 
+
+
+// ---------------------------
+// ADD CANDIDATE (ELECTORAL COMMITTEE)
+// ---------------------------
 const addCandidateElectoral = async (req, res) => {
   try {
     const {
@@ -84,7 +118,16 @@ const addCandidateElectoral = async (req, res) => {
       return res.status(400).json({ message: 'Email already used by another candidate.' });
     }
 
-    // Hash the password
+    // ⭐ Auto get active election
+    const activeElection = await getActiveElection();
+    if (!activeElection) {
+      return res.status(400).json({
+        success: false,
+        message: 'No active election available. Create or activate an election first.'
+      });
+    }
+
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const candidate = new Candidate({
@@ -98,31 +141,40 @@ const addCandidateElectoral = async (req, res) => {
       position,
       photo: photo || '',
       politicalSign: politicalSign || '',
-      verified:true,
+      verified: true,
       candidateId: new mongoose.Types.ObjectId(),
-      createdBy: req.user ? req.user._id : null // optional: set after auth
+      createdBy: req.user ? req.user._id : null,
+
+      // ⭐ AUTO-ASSIGN ACTIVE ELECTION
+      election: activeElection._id,
+      election_id: String(activeElection._id)
     });
 
     await candidate.save();
+
     res.status(201).json({
-      message: 'Candidate added successfully!',
-      success:true,
+      success: true,
+      message: 'Candidate added and linked to the active election.',
       data: candidate,
+      assignedElection: activeElection
     });
+
   } catch (error) {
     console.error('Error adding candidate:', error);
-    res.status(500).json({ message: error.message, success:false });
+    res.status(500).json({ message: error.message, success: false });
   }
 };
 
 
-// Get all candidates with search and pagination
+
+// ---------------------------
+// GET ALL CANDIDATES
+// ---------------------------
 const getAllCandidates = async (req, res) => {
   try {
     const { q, page = 1, limit = 10 } = req.query;
     const skip = (page - 1) * limit;
 
-    // Build filter for search
     const filter = {};
     if (q) {
       filter.$or = [
@@ -154,7 +206,9 @@ const getAllCandidates = async (req, res) => {
 };
 
 
-// Get candidate by ID
+// ---------------------------
+// GET CANDIDATE BY ID
+// ---------------------------
 const getCandidateById = async (req, res) => {
   try {
     const candidate = await Candidate.findById(req.params.id);
@@ -168,12 +222,13 @@ const getCandidateById = async (req, res) => {
 };
 
 
-// Update candidate
+// ---------------------------
+// UPDATE CANDIDATE
+// ---------------------------
 const updateCandidate = async (req, res) => {
   try {
     const updates = { ...req.body };
 
-    // If updating password, hash it
     if (updates.password) {
       updates.password = await bcrypt.hash(updates.password, 10);
     }
@@ -198,7 +253,9 @@ const updateCandidate = async (req, res) => {
 };
 
 
-// Delete candidate
+// ---------------------------
+// DELETE CANDIDATE
+// ---------------------------
 const deleteCandidate = async (req, res) => {
   try {
     const deleted = await Candidate.findByIdAndDelete(req.params.id);
@@ -212,12 +269,14 @@ const deleteCandidate = async (req, res) => {
     res.status(500).json({ message: 'Error deleting candidate.' });
   }
 };
-// Export (CommonJS)
+
+
+// Export
 module.exports = {
   addCandidate,
+  addCandidateElectoral,
   getAllCandidates,
   getCandidateById,
   updateCandidate,
-  deleteCandidate,
-  addCandidateElectoral
+  deleteCandidate
 };
