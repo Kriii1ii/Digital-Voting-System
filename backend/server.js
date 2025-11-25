@@ -180,22 +180,36 @@ const io = new Server(server, {
 app.set('io', io);
 
 // initialize prediction watcher to emit updates on DB changes
+// initialize prediction watcher (DISABLED IN PRODUCTION)
 const initPredictionWatcher = require('./realtime/predictionWatcher.js');
-try {
-  // initPredictionWatcher may return a promise
-  initPredictionWatcher(io).catch?.((err) => console.error('Prediction watcher failed to start:', err));
-} catch (err) {
-  console.error('Could not initialize prediction watcher:', err);
+
+if (process.env.NODE_ENV !== "production") {
+  try {
+    initPredictionWatcher(io).catch?.((err) =>
+      console.error('Prediction watcher failed to start:', err)
+    );
+  } catch (err) {
+    console.error('Could not initialize prediction watcher:', err);
+  }
+} else {
+  console.log("🚫 Prediction watcher disabled in production (MongoDB free tier)");
 }
-// Start mock votes in development or when specifically enabled
+
+
+// Start mock votes (DISABLED IN PRODUCTION)
 try {
-  if (process.env.ENABLE_MOCK_VOTES !== 'false') {
+  if (process.env.NODE_ENV !== 'production' && process.env.ENABLE_MOCK_VOTES !== 'false') {
     const initMockVotes = require('./realtime/mockVotes.js');
-    initMockVotes(io).catch?.((err) => console.error('Mock votes failed to start:', err));
+    initMockVotes(io).catch?.((err) =>
+      console.error('Mock votes failed to start:', err)
+    );
+  } else {
+    console.log("🚫 Mock votes disabled in production");
   }
 } catch (err) {
   console.error('Could not initialize mock votes:', err);
 }
+
 // Socket.IO logic
 io.on('connection', (socket) => {
   console.log('Socket connected:', socket.id, 'from', socket.handshake.address);
