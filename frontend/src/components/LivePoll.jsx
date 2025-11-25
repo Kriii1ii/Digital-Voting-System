@@ -98,19 +98,19 @@ export default function LivePoll({ electionId, refreshInterval = 5000, title }) 
 
           {loading && <div className="text-center text-gray-400">Loading predictions…</div>}
 
-          {!loading && sorted.length === 0 && (
+          {!loading && displayList.length === 0 && (
             <div className="text-center text-gray-500">No candidates found for this election.</div>
           )}
 
           <div className="space-y-3">
             {/* Winner spotlight */}
-            {sorted.length > 0 && (
+            {displayList.length > 0 && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-3 flex items-center gap-4">
                 <div className="w-16 h-16 rounded-lg bg-white overflow-hidden flex items-center justify-center">
-                  {sorted[0].photo ? (
-                    <img src={sorted[0].photo} alt={sorted[0].name} className="w-full h-full object-cover" />
+                  {displayList[0].photo ? (
+                    <img src={displayList[0].photo} alt={displayList[0].name} className="w-full h-full object-cover" />
                   ) : (
-                      <div className="text-xl font-bold text-yellow-600">{(sorted[0].name || '').charAt(0)}</div>
+                      <div className="text-xl font-bold text-yellow-600">{(displayList[0].name || '').charAt(0)}</div>
                   )}
                 </div>
                 <div className="flex-1">

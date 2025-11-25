@@ -32,7 +32,14 @@ export default function PredictionPoll({ electionId, refreshInterval = 10000 }) 
       }
     } catch (err) {
       console.error("Prediction fetch error:", err);
-      setError(err.response?.data || err.message || "Failed to load predictions");
+      // If backend reports 404 (no engagement), do not surface as UI error to voter; use fallback instead
+      const status = err?.response?.status;
+      if (status === 404) {
+        setData({ candidates: [], topCandidateId: null });
+        setError(null);
+      } else {
+        setError(err.response?.data || err.message || "Failed to load predictions");
+      }
     } finally {
       setLoading(false);
     }
@@ -141,7 +148,7 @@ export default function PredictionPoll({ electionId, refreshInterval = 10000 }) 
       </div>
     );
 
-  if (!candidates.length)
+  if (!candidatesToShow.length)
     return <div className="p-4 bg-white rounded shadow">No predictions available</div>;
 
   return (

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { io as ioClient } from 'socket.io-client';
+import { useAuth } from '../contexts/AuthContext';
 
 const SOCKET_SERVER = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_BACKEND_URL)
   ? import.meta.env.VITE_BACKEND_URL
@@ -15,6 +16,9 @@ function ProgressBar({ value = 0, color = '#3b82f6' }) {
 }
 
 export default function MetricsDashboard({ electionId = 'mock-election' }) {
+  const { user } = useAuth();
+  // Only show metrics to admin users
+  if (user && user.role && user.role !== 'admin') return null;
   const socketRef = useRef(null);
   const [metrics, setMetrics] = useState(null);
   const [lastUpdate, setLastUpdate] = useState(null);

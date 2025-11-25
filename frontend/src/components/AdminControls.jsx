@@ -1,12 +1,16 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { io as ioClient } from 'socket.io-client';
 import { candidateNameMap } from '../utils/candidateNameMap';
+import { useAuth } from '../contexts/AuthContext';
 
 const SOCKET_SERVER = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_BACKEND_URL)
   ? import.meta.env.VITE_BACKEND_URL
   : (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:5001` : 'http://localhost:5001');
 
 export default function AdminControls({ electionId = 'mock-election' }) {
+  const { user } = useAuth();
+  // hide admin UI for non-admin users
+  if (user && user.role && user.role !== 'admin') return null;
   const socketRef = useRef(null);
   const [running, setRunning] = useState(true);
   const [speed, setSpeed] = useState(1);
