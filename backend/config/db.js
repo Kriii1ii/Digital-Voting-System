@@ -5,7 +5,7 @@ const connectDB = async () => {
   try {
     // Use environment variable if provided, otherwise fall back to a local DB for dev
   // Follow INTEGRATE.md requirement: default DB name `digitalvoting` (no underscore)
-  const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/digitalvoting';
+  const mongoUri = process.env.MONGO_URI || 'mongodb+srv://ritika_mhrzn:ritika2324@cluster0.wvzarom.mongodb.net/NayaMatDb?retryWrites=true&w=majority&appName=Cluster0';
 
     if (!process.env.MONGO_URI) {
       console.warn(
