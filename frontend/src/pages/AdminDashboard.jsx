@@ -46,6 +46,7 @@ import LivePollHero from "../components/LivePollHero";
 import PredictionPoll from "../components/PredictionPoll";
 import AnimatedPoll from "../components/AnimatedPoll";
 import AdminControls from "../components/AdminControls";
+import MetricsDashboard from "../components/MetricsDashboard";
 import { useAuth } from "../contexts/AuthContext";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
@@ -669,6 +670,7 @@ const AdminDashboard = () => {
         <div className="md:col-span-1">
           <div className="space-y-4">
             <AnimatedPoll electionId={'mock-election'} />
+            <MetricsDashboard electionId={'mock-election'} />
             <AdminControls electionId={'mock-election'} />
             <PredictionPoll electionId={'mock-election'} refreshInterval={3000} />
           </div>
