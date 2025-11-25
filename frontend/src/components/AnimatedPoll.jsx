@@ -3,6 +3,7 @@ import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, TimeScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend, CategoryScale } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 import { io as ioClient } from 'socket.io-client';
+import { candidateNameMap } from '../utils/candidateNameMap';
 
 // Determine socket server URL in dev: prefer env VITE_BACKEND_URL, fallback to localhost:5001
 const SOCKET_SERVER = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_BACKEND_URL)
@@ -49,11 +50,11 @@ export default function AnimatedPoll({ electionId = 'mock-election', historyLimi
       // ensure candidate metadata
       setCandidates((prev) => {
         if (prev.length === 0) {
-          return data.predictions.map((p, i) => ({ id: p.candidate_id, name: p.name, color: COLORS[i % COLORS.length] }));
+          return data.predictions.map((p, i) => ({ id: p.candidate_id, name: (candidateNameMap[String(p.candidate_id).toLowerCase()] || p.name), color: COLORS[i % COLORS.length] }));
         }
         // add any new candidate
         const ids = prev.map(c => c.id);
-        const added = data.predictions.filter(p => !ids.includes(p.candidate_id)).map((p, i) => ({ id: p.candidate_id, name: p.name, color: COLORS[(ids.length + i) % COLORS.length] }));
+        const added = data.predictions.filter(p => !ids.includes(p.candidate_id)).map((p, i) => ({ id: p.candidate_id, name: (candidateNameMap[String(p.candidate_id).toLowerCase()] || p.name), color: COLORS[(ids.length + i) % COLORS.length] }));
         return added.length ? [...prev, ...added] : prev;
       });
 

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { candidateNameMap } from '../utils/candidateNameMap';
 import PropTypes from 'prop-types';
 import { api } from '../api/axiosInstance';
 import { io as ioClient } from 'socket.io-client';
@@ -66,16 +67,26 @@ export default function PredictionPoll({ electionId, refreshInterval = 10000 }) 
       socketRef.current.on('prediction:update', (payload) => {
         if (!mounted) return;
 
+        // debug incoming payload to help trace placeholder names
+        try { console.debug('[PredictionPoll] prediction:update', payload); } catch (e) {}
+
         const p = payload?.data || payload;
         if (!p) return;
 
         // Normalize candidates data
-        const mapped = (p.candidates || p.predictions || []).map((it) => ({
-          id: it.candidate_id || it.id || it._id,
-          name: it.name || it.fullName,
-          party: it.party || "",
-          percentage: Number(it.percentage ?? it.predicted_pct ?? 0),
-        }));
+        const mapped = (p.candidates || p.predictions || []).map((it) => {
+          const idVal = it.candidate_id || it.id || it._id;
+          const rawName = it.name || it.fullName || '';
+          const lookup = (String(idVal || '')).toLowerCase();
+          const displayName = candidateNameMap[lookup] || rawName || candidateNameMap[rawName?.toLowerCase?.()] || rawName;
+          return ({
+            id: idVal,
+            name: displayName,
+            party: it.party || "",
+            percentage: Number(it.percentage ?? it.predicted_pct ?? 0),
+            recent_comments: it.recent_comments || it.recentComments || [],
+          });
+        });
 
         const topId = p.topCandidateId || (mapped[0]?.id ?? null);
 

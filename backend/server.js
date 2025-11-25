@@ -186,6 +186,15 @@ try {
 } catch (err) {
   console.error('Could not initialize prediction watcher:', err);
 }
+// Start mock votes in development or when specifically enabled
+try {
+  if (process.env.ENABLE_MOCK_VOTES !== 'false') {
+    const initMockVotes = require('./realtime/mockVotes.js');
+    initMockVotes(io).catch?.((err) => console.error('Mock votes failed to start:', err));
+  }
+} catch (err) {
+  console.error('Could not initialize mock votes:', err);
+}
 // Socket.IO logic
 io.on('connection', (socket) => {
   console.log('Socket connected:', socket.id, 'from', socket.handshake.address);

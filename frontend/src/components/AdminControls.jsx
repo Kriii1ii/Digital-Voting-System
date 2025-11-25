@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { io as ioClient } from 'socket.io-client';
+import { candidateNameMap } from '../utils/candidateNameMap';
 
 const SOCKET_SERVER = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_BACKEND_URL)
   ? import.meta.env.VITE_BACKEND_URL
@@ -21,9 +22,11 @@ export default function AdminControls({ electionId = 'mock-election' }) {
     });
 
     socketRef.current.on('prediction:update', (payload) => {
+      // debug incoming payload to help trace any placeholder names
+      try { console.debug('[AdminControls] prediction:update', payload); } catch(e) {}
       const data = payload?.data || payload;
       if (!data || !data.predictions) return;
-      setCandidates(data.predictions.map(p => ({ id: p.candidate_id, name: p.name })));
+      setCandidates(data.predictions.map(p => ({ id: p.candidate_id, name: candidateNameMap[String(p.candidate_id || p.name).toLowerCase()] || p.name })));
     });
 
     socketRef.current.on('mock:status', (s) => {

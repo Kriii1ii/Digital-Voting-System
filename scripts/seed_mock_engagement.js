@@ -12,10 +12,13 @@ async function run() {
   await mongoose.connect(MONGO, { useNewUrlParser: true, useUnifiedTopology: true });
   const db = mongoose.connection.db;
 
+  // Replace placeholders with the five real candidates used by the mock simulator
   const candidates = [
-    { _id: uuidv4(), name: 'Alice', election_id: electionId },
-    { _id: uuidv4(), name: 'Bob', election_id: electionId },
-    { _id: uuidv4(), name: 'Carol', election_id: electionId },
+    { _id: 'prapti', name: 'Prapti Baral', election_id: electionId, initialVotes: 1000 },
+    { _id: 'astha', name: 'Astha Ghimire', election_id: electionId, initialVotes: 850 },
+    { _id: 'max', name: 'Max Acharya', election_id: electionId, initialVotes: 700 },
+    { _id: 'lewis', name: 'Lewis Shrestha', election_id: electionId, initialVotes: 950 },
+    { _id: 'rabina', name: 'Rabina Shah', election_id: electionId, initialVotes: 600 },
   ];
 
   await db.collection('candidates').insertMany(candidates);

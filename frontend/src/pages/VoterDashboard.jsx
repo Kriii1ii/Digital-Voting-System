@@ -33,6 +33,7 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import PredictionPoll from "../components/PredictionPoll";
 import AnimatedPoll from "../components/AnimatedPoll";
+import { candidateNameMap } from '../utils/candidateNameMap';
 
 // NAVBAR 
 const Navbar = ({ setPage }) => {
@@ -1429,7 +1430,7 @@ const VoteNowPage = () => {
               </div>
 
               {/* Candidate Info */}
-              <h3 className="font-bold text-gray-800 text-xl mb-2">{candidate.fullName ?? candidate.name ?? "Unnamed Candidate"}</h3>
+              <h3 className="font-bold text-gray-800 text-xl mb-2">{(candidateNameMap[(candidate._id || candidate.id || candidate.name || '').toString().toLowerCase()] ?? candidate.fullName ?? candidate.name) ?? "Unnamed Candidate"}</h3>
               <div className="mb-3">
                 <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
                   {candidate.partyName || candidate.party || "Independent"}

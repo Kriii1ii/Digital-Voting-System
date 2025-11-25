@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { io as ioClient } from 'socket.io-client';
+import { candidateNameMap } from '../utils/candidateNameMap';
 import { getPrediction } from '../api/endpoints';
 
 export default function LivePoll({ electionId, refreshInterval = 5000, title }) {
@@ -22,6 +23,8 @@ export default function LivePoll({ electionId, refreshInterval = 5000, title }) 
         });
         socketRef.current.on('prediction:update', (data) => {
           if (!mounted) return;
+          // debug incoming payload to help trace placeholder names
+          try { console.debug('[LivePoll] prediction:update', data); } catch (e) {}
           // support both room-only payload (data) and global { electionId, data }
           const payload = data?.data ? data.data : data;
           if (payload && payload.predictions) {
@@ -101,7 +104,7 @@ export default function LivePoll({ electionId, refreshInterval = 5000, title }) 
                 <div className="flex-1">
                   <div className="text-sm text-gray-600">Current predicted winner</div>
                   <div className="flex items-center justify-between">
-                    <div className="text-lg font-semibold text-gray-800">{sorted[0].name}</div>
+                          <div className="text-lg font-semibold text-gray-800">{candidateNameMap[(sorted[0].candidate_id || sorted[0].id || sorted[0].name || '').toString().toLowerCase()] || sorted[0].name}</div>
                     <div className="text-lg font-bold text-yellow-600">{Math.round(sorted[0].predicted_pct || 0)}%</div>
                   </div>
                   <div className="text-xs text-gray-500">Updated live as engagement changes</div>
@@ -116,7 +119,7 @@ export default function LivePoll({ electionId, refreshInterval = 5000, title }) 
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
                       <div className="w-3 h-3 rounded-full" style={{ background: `linear-gradient(90deg,#fb7185,#f59e0b)` }} />
-                      <div className="text-sm font-medium text-gray-800">{p.name}</div>
+                      <div className="text-sm font-medium text-gray-800">{candidateNameMap[(p.candidate_id || p.id || p.name || '').toString().toLowerCase()] || p.name}</div>
                     </div>
                     <div className="text-sm text-gray-700 flex items-baseline gap-2">
                       <span className="font-semibold">{count}</span>

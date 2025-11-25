@@ -1,0 +1,499 @@
+Connecting to http://localhost:5001
+Connected CpM27SlcuE0ny18fAAAT
+update 1 preds [
+  'prapti:21.09',
+  'astha:25.96',
+  'max:40.82',
+  'lewis:6.53',
+  'rabina:9.1'
+]
+update 2 preds [
+  'prapti:21.09',
+  'astha:25.96',
+  'max:40.82',
+  'lewis:6.53',
+  'rabina:9.1'
+]
+update 3 preds [
+  'prapti:21.1',
+  'astha:25.95',
+  'max:40.82',
+  'lewis:6.53',
+  'rabina:9.1'
+]
+update 4 preds [
+  'prapti:21.1',
+  'astha:25.95',
+  'max:40.82',
+  'lewis:6.53',
+  'rabina:9.1'
+]
+update 5 preds [
+  'prapti:21.12',
+  'astha:25.95',
+  'max:40.8',
+  'lewis:6.53',
+  'rabina:9.09'
+]
+update 6 preds [
+  'prapti:21.13',
+  'astha:25.95',
+  'max:40.8',
+  'lewis:6.53',
+  'rabina:9.09'
+]
+update 7 preds [
+  'prapti:21.12',
+  'astha:25.95',
+  'max:40.8',
+  'lewis:6.54',
+  'rabina:9.09'
+]
+update 8 preds [
+  'prapti:21.13',
+  'astha:25.94',
+  'max:40.8',
+  'lewis:6.54',
+  'rabina:9.09'
+]
+update 9 preds [
+  'prapti:21.13',
+  'astha:25.94',
+  'max:40.8',
+  'lewis:6.54',
+  'rabina:9.09'
+]
+update 10 preds [
+  'prapti:21.12',
+  'astha:25.95',
+  'max:40.79',
+  'lewis:6.55',
+  'rabina:9.08'
+]
+update 11 preds [
+  'prapti:21.12',
+  'astha:25.95',
+  'max:40.78',
+  'lewis:6.55',
+  'rabina:9.09'
+]
+update 12 preds [
+  'prapti:21.11',
+  'astha:25.96',
+  'max:40.78',
+  'lewis:6.55',
+  'rabina:9.09'
+]
+update 13 preds [
+  'prapti:21.11',
+  'astha:25.96',
+  'max:40.78',
+  'lewis:6.55',
+  'rabina:9.09'
+]
+update 14 preds [
+  'prapti:21.12',
+  'astha:25.96',
+  'max:40.77',
+  'lewis:6.54',
+  'rabina:9.09'
+]
+update 15 preds [
+  'prapti:21.12',
+  'astha:25.96',
+  'max:40.77',
+  'lewis:6.54',
+  'rabina:9.09'
+]
+update 16 preds [
+  'prapti:21.12',
+  'astha:25.97',
+  'max:40.76',
+  'lewis:6.54',
+  'rabina:9.1'
+]
+update 17 preds [
+  'prapti:21.13',
+  'astha:25.97',
+  'max:40.75',
+  'lewis:6.54',
+  'rabina:9.11'
+]
+update 18 preds [
+  'prapti:21.13',
+  'astha:25.97',
+  'max:40.75',
+  'lewis:6.54',
+  'rabina:9.11'
+]
+update 19 preds [
+  'prapti:21.12',
+  'astha:25.96',
+  'max:40.74',
+  'lewis:6.54',
+  'rabina:9.12'
+]
+update 20 preds [
+  'prapti:21.03',
+  'astha:25.81',
+  'max:41.07',
+  'lewis:6.51',
+  'rabina:9.08'
+]
+update 21 preds [
+  'prapti:21.05',
+  'astha:25.8',
+  'max:41.06',
+  'lewis:6.5',
+  'rabina:9.08'
+]
+update 22 preds [
+  'prapti:21.04',
+  'astha:25.86',
+  'max:41.02',
+  'lewis:6.5',
+  'rabina:9.07'
+]
+update 23 preds [
+  'prapti:21.05',
+  'astha:25.86',
+  'max:41.01',
+  'lewis:6.51',
+  'rabina:9.07'
+]
+update 24 preds [
+  'prapti:21.06',
+  'astha:25.85',
+  'max:41.01',
+  'lewis:6.51',
+  'rabina:9.07'
+]
+update 25 preds [
+  'prapti:21.05',
+  'astha:25.85',
+  'max:41',
+  'lewis:6.52',
+  'rabina:9.08'
+]
+update 26 preds [
+  'prapti:21.04',
+  'astha:25.85',
+  'max:41',
+  'lewis:6.53',
+  'rabina:9.07'
+]
+update 27 preds [
+  'prapti:21.04',
+  'astha:25.85',
+  'max:41',
+  'lewis:6.53',
+  'rabina:9.07'
+]
+update 28 preds [
+  'prapti:21.04',
+  'astha:25.85',
+  'max:41',
+  'lewis:6.53',
+  'rabina:9.07'
+]
+update 29 preds [
+  'prapti:21.04',
+  'astha:25.84',
+  'max:40.99',
+  'lewis:6.54',
+  'rabina:9.08'
+]
+update 30 preds [
+  'prapti:21.04',
+  'astha:25.83',
+  'max:41',
+  'lewis:6.54',
+  'rabina:9.08'
+]
+update 31 preds [
+  'prapti:21.03',
+  'astha:25.84',
+  'max:40.99',
+  'lewis:6.54',
+  'rabina:9.08'
+]
+update 32 preds [
+  'prapti:21.03',
+  'astha:25.84',
+  'max:40.99',
+  'lewis:6.54',
+  'rabina:9.09'
+]
+update 33 preds [
+  'prapti:21.03',
+  'astha:25.84',
+  'max:40.99',
+  'lewis:6.54',
+  'rabina:9.09'
+]
+update 34 preds [
+  'prapti:21.04',
+  'astha:25.84',
+  'max:40.97',
+  'lewis:6.55',
+  'rabina:9.09'
+]
+update 35 preds [
+  'prapti:21.04',
+  'astha:25.84',
+  'max:40.97',
+  'lewis:6.55',
+  'rabina:9.09'
+]
+update 36 preds [
+  'prapti:21.03',
+  'astha:25.85',
+  'max:40.96',
+  'lewis:6.55',
+  'rabina:9.1'
+]
+update 37 preds [
+  'prapti:21.04',
+  'astha:25.85',
+  'max:40.95',
+  'lewis:6.54',
+  'rabina:9.11'
+]
+update 38 preds [
+  'prapti:21.05',
+  'astha:25.84',
+  'max:40.95',
+  'lewis:6.54',
+  'rabina:9.11'
+]
+update 39 preds [
+  'prapti:21.05',
+  'astha:25.84',
+  'max:40.95',
+  'lewis:6.54',
+  'rabina:9.11'
+]
+update 40 preds [
+  'prapti:21.04',
+  'astha:25.84',
+  'max:40.96',
+  'lewis:6.54',
+  'rabina:9.11'
+]
+update 41 preds [
+  'prapti:21.05',
+  'astha:25.84',
+  'max:40.94',
+  'lewis:6.55',
+  'rabina:9.1'
+]
+update 42 preds [
+  'prapti:21.04',
+  'astha:25.84',
+  'max:40.93',
+  'lewis:6.56',
+  'rabina:9.11'
+]
+update 43 preds [
+  'prapti:21.05',
+  'astha:25.83',
+  'max:40.94',
+  'lewis:6.56',
+  'rabina:9.11'
+]
+update 44 preds [
+  'prapti:21.55',
+  'astha:25.83',
+  'max:40.93',
+  'lewis:6.56',
+  'rabina:9.11'
+]
+update 45 preds [
+  'prapti:21.56',
+  'astha:25.82',
+  'max:40.92',
+  'lewis:6.57',
+  'rabina:9.11'
+]
+update 46 preds [
+  'prapti:21.56',
+  'astha:25.81',
+  'max:40.92',
+  'lewis:6.58',
+  'rabina:9.11'
+]
+update 47 preds [
+  'prapti:21.57',
+  'astha:25.81',
+  'max:40.91',
+  'lewis:6.58',
+  'rabina:9.11'
+]
+update 48 preds [
+  'prapti:21.57',
+  'astha:25.8',
+  'max:40.92',
+  'lewis:6.58',
+  'rabina:9.1'
+]
+update 49 preds [
+  'prapti:21.57',
+  'astha:25.8',
+  'max:40.91',
+  'lewis:6.58',
+  'rabina:9.11'
+]
+update 50 preds [
+  'prapti:21.58',
+  'astha:25.79',
+  'max:40.9',
+  'lewis:6.59',
+  'rabina:9.11'
+]
+update 51 preds [
+  'prapti:21.59',
+  'astha:25.79',
+  'max:40.89',
+  'lewis:6.59',
+  'rabina:9.6'
+]
+update 52 preds [
+  'prapti:21.6',
+  'astha:25.78',
+  'max:40.88',
+  'lewis:6.59',
+  'rabina:9.61'
+]
+update 53 preds [
+  'prapti:21.63',
+  'astha:25.77',
+  'max:40.87',
+  'lewis:6.59',
+  'rabina:9.6'
+]
+update 54 preds [
+  'prapti:21.62',
+  'astha:25.78',
+  'max:40.86',
+  'lewis:6.59',
+  'rabina:9.6'
+]
+update 55 preds [
+  'prapti:21.61',
+  'astha:25.86',
+  'max:40.83',
+  'lewis:6.58',
+  'rabina:10.73'
+]
+update 56 preds [
+  'prapti:21.6',
+  'astha:25.86',
+  'max:40.83',
+  'lewis:6.57',
+  'rabina:10.73'
+]
+update 57 preds [
+  'prapti:21.6',
+  'astha:25.85',
+  'max:40.83',
+  'lewis:6.57',
+  'rabina:10.75'
+]
+
+=== Computed Metrics (from collected updates) ===
+{
+  "perCandidate": {
+    "prapti": {
+      "regression": {
+        "MAE": null,
+        "RMSE": null
+      },
+      "classification": {
+        "TP": 0,
+        "FP": 0,
+        "TN": 0,
+        "FN": 57,
+        "accuracy": 0,
+        "precision": 0,
+        "recall": 0,
+        "f1": 0
+      },
+      "brier": 0.6209434484210528
+    },
+    "astha": {
+      "regression": {
+        "MAE": null,
+        "RMSE": null
+      },
+      "classification": {
+        "TP": 0,
+        "FP": 0,
+        "TN": 57,
+        "FN": 0,
+        "accuracy": 1,
+        "precision": 0,
+        "recall": 0,
+        "f1": 0
+      },
+      "brier": 0.06693516473684213
+    },
+    "max": {
+      "regression": {
+        "MAE": null,
+        "RMSE": null
+      },
+      "classification": {
+        "TP": 0,
+        "FP": 57,
+        "TN": 0,
+        "FN": 0,
+        "accuracy": 0,
+        "precision": 0,
+        "recall": 0,
+        "f1": 0
+      },
+      "brier": 0.16723878771929823
+    },
+    "lewis": {
+      "regression": {
+        "MAE": null,
+        "RMSE": null
+      },
+      "classification": {
+        "TP": 0,
+        "FP": 0,
+        "TN": 57,
+        "FN": 0,
+        "accuracy": 1,
+        "precision": 0,
+        "recall": 0,
+        "f1": 0
+      },
+      "brier": 0.004286395789473685
+    },
+    "rabina": {
+      "regression": {
+        "MAE": null,
+        "RMSE": null
+      },
+      "classification": {
+        "TP": 0,
+        "FP": 0,
+        "TN": 57,
+        "FN": 0,
+        "accuracy": 1,
+        "precision": 0,
+        "recall": 0,
+        "f1": 0
+      },
+      "brier": 0.008508266315789473
+    }
+  },
+  "overall": {
+    "regression": {
+      "MAE": null,
+      "RMSE": null
+    },
+    "winnerAccuracy": 0
+  }
+}
