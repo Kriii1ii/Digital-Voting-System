@@ -50,14 +50,14 @@ const candidateSchema = new mongoose.Schema(
       required:false,
       ref: 'User',
     },
-    // Link to election (required going forward)
+    // Link to election (optional for backward compatibility)
     election: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Election',
-      required: true,
+      required: false,
       index: true,
     },
-    election_id: { type: String, required: true, index: true },
+    election_id: { type: String, required: false, index: true, default: '' },
   },
   { timestamps: true }
 );

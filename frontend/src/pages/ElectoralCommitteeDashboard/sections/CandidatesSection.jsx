@@ -139,7 +139,7 @@ const CandidatesSection = ({
                   onChange={handleCandidateInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-500"
                   placeholder="Enter party name"
-                  maxLength={15}
+                  maxLength={100}
                 />
                 {formErrors.partyName && (
                   <p className="text-red-500 text-sm mt-1">{formErrors.partyName}</p>
