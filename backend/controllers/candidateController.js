@@ -116,25 +116,34 @@ const addCandidateElectoral = async (req, res) => {
 };
 
 
-// Get all candidates
+// Get all candidates with search and pagination
 const getAllCandidates = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;   // default page = 1
-    const limit = parseInt(req.query.limit) || 10; // default limit = 10
+    const { q, page = 1, limit = 10 } = req.query;
     const skip = (page - 1) * limit;
 
-    const totalCandidates = await Candidate.countDocuments(); // total count
+    // Build filter for search
+    const filter = {};
+    if (q) {
+      filter.$or = [
+        { fullName: new RegExp(q, "i") },
+        { partyName: new RegExp(q, "i") },
+        { position: new RegExp(q, "i") }
+      ];
+    }
 
-    const candidates = await Candidate.find()
+    const totalCandidates = await Candidate.countDocuments(filter);
+
+    const candidates = await Candidate.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit);
+      .limit(parseInt(limit));
 
     res.status(200).json({
       success: true,
       totalCandidates,
       totalPages: Math.ceil(totalCandidates / limit),
-      currentPage: page,
+      currentPage: parseInt(page),
       results: candidates
     });
 

@@ -1,4 +1,5 @@
 const Voter = require("../models/Voter.js");
+
 // Get all voters
 const getAllVoters = async (req, res) => {
   try {
@@ -47,16 +48,11 @@ const getAllVoters = async (req, res) => {
   }
 };
 
-
-
 // Verify voter
 const verifyVoter = async (req, res) => {
   try {
     const { voterId } = req.params;
-
-    // Normalize the voterId for consistency
     const formattedId = voterId.toUpperCase().trim();
-
     const voter = await Voter.findOne({ voterId: formattedId });
 
     if (!voter) {
@@ -85,12 +81,10 @@ const verifyVoter = async (req, res) => {
   }
 };
 
-
 // Update voter
 const updateVoter = async (req, res) => {
   try {
     const { id } = req.params;
-
     const voter = await Voter.findByIdAndUpdate(id, req.body, {
       new: true,
       runValidators: true
@@ -111,13 +105,10 @@ const updateVoter = async (req, res) => {
   }
 };
 
-
-
 // Delete voter
 const deleteVoter = async (req, res) => {
   try {
     const { id } = req.params;
-
     const voter = await Voter.findByIdAndDelete(id);
 
     if (!voter) {
@@ -133,6 +124,7 @@ const deleteVoter = async (req, res) => {
     return res.status(500).json({ success: false, message: "Server Error" });
   }
 };
+
 module.exports = {
   getAllVoters,
   verifyVoter,

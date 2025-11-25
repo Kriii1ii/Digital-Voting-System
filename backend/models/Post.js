@@ -8,6 +8,7 @@ const postSchema = new mongoose.Schema(
     election_id: { type: String, required: false, index: true },
     candidate_id: { type: String, required: false, index: true },
     text: { type: String, default: '' },
+    comments: { type: String, default: 0 },
     media: { type: Object, default: null },
     reactionsCount: { type: Number, default: 0 },
   },

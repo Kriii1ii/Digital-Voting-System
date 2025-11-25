@@ -53,7 +53,7 @@ ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 const menuItems = [
   { id: "dashboard", label: "Dashboard", icon: <Home className="w-5 h-5" /> },
-  { id: "votes", label: "Votes", icon: <BarChart2 className="w-5 h-5" /> },
+
   { id: "voters", label: "Voters", icon: <Users className="w-5 h-5" /> },
   { id: "candidates", label: "Candidates", icon: <FileText className="w-5 h-5" /> },
 ];
@@ -751,9 +751,7 @@ const AdminDashboard = () => {
     </>
   );
 
-  const VotesSection = () => (
-    <VotesPanel />
-  );
+  
 
   // New: VotesPanel component implemented below to keep code organized
   const VotesPanel = () => {

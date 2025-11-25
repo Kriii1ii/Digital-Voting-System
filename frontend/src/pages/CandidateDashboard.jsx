@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Camera, Video, X, Edit2, Trash2, Save, LogOut } from "lucide-react";
+import { Camera, Video, X, Edit2, Trash2, Save, LogOut, ThumbsUp, MessageCircle, User } from "lucide-react";
 import { getPosts, createPost, updatePost, deletePost } from "../api/endpoints";
 import { useAuth } from "../contexts/AuthContext";
 //Notification
@@ -72,6 +72,7 @@ const Navbar = ({ setPage, search, setSearch }) => {
 const PostCard = ({ post, user, onViewMedia, onDelete, onSaveEdit }) => {
   const [editText, setEditText] = useState(post.text);
   const [isEditing, setIsEditing] = useState(false);
+  const [showAllComments, setShowAllComments] = useState(false);
   const candidateData=JSON.parse(localStorage.getItem('user'))
   
   const authorImageErrorRef = useRef(false);
@@ -212,7 +213,7 @@ const PostCard = ({ post, user, onViewMedia, onDelete, onSaveEdit }) => {
             className="w-10 h-10 rounded-full object-cover border cursor-pointer" 
             onClick={() => onViewMedia(getSafeImageUrl(authorInfo.pic), "image")} 
             onError={(e) => {
-              console.error("Failed to load author image:", authorInfo.pic);
+              console.error("Failed toload author image:", authorInfo.pic);
               authorImageErrorRef.current = true;
               e.target.style.display = 'none';
             }}
@@ -279,6 +280,141 @@ const PostCard = ({ post, user, onViewMedia, onDelete, onSaveEdit }) => {
           }}
         />
       )}
+
+      {/* Reactions and Comments Display (Read-only for candidates) */}
+      {(() => {
+        // Safely get reactions and comments, ensuring they're arrays
+        const reactions = Array.isArray(post.reactions) ? post.reactions : [];
+        const comments = Array.isArray(post.comments) ? post.comments : [];
+        const totalReactions = reactions.length;
+        const totalComments = comments.length;
+
+        // Get top reaction types for display
+        const reactionCounts = {};
+        reactions.forEach(r => {
+          if (r && typeof r === 'object' && r.type) {
+            reactionCounts[r.type] = (reactionCounts[r.type] || 0) + 1;
+          }
+        });
+
+        const topReactionTypes = Object.entries(reactionCounts)
+          .sort(([, a], [, b]) => b - a)
+          .slice(0, 3)
+          .map(([type]) => {
+            const emojiMap = {
+              like: '👍',
+              love: '❤️',
+              haha: '😂',
+              wow: '😮',
+              sad: '😢',
+              angry: '😡'
+            };
+            return emojiMap[type] || '👍';
+          });
+
+        if (totalReactions === 0 && totalComments === 0) {
+          return null;
+        }
+
+        // Determine which comments to display
+        const commentsToDisplay = showAllComments ? comments : comments.slice(0, 5);
+        const hasMoreComments = comments.length > 5;
+
+        return (
+          <>
+            {/* Reaction and Comment Stats */}
+            <div className="flex items-center justify-between text-sm text-gray-500 border-t border-gray-100 pt-2 mt-2">
+              <div className="flex items-center gap-2">
+                {totalReactions > 0 && (
+                  <div className="flex items-center gap-1">
+                    <div className="flex">
+                      {topReactionTypes.map((emoji, index) => (
+                        <span key={index} className="text-xs bg-white rounded-full border border-white -ml-1 first:ml-0">
+                          {typeof emoji === 'string' ? emoji : '👍'}
+                        </span>
+                      ))}
+                    </div>
+                    <span>{totalReactions}</span>
+                  </div>
+                )}
+              </div>
+              {totalComments > 0 && (
+                <span>{totalComments} {totalComments === 1 ? 'comment' : 'comments'}</span>
+              )}
+            </div>
+
+            {/* Comments Section (Read-only) */}
+            {comments.length > 0 && (
+              <div className="mt-3 space-y-3 border-t border-gray-100 pt-3">
+                {commentsToDisplay.map((comment, index) => {
+                  // Ensure comment is an object and has required fields
+                  if (!comment || typeof comment !== 'object') return null;
+                  
+                  const commentUser = comment.user || {};
+                  const userName = commentUser.fullName || 'Unknown User';
+                  const userPic = commentUser.profilePic || null;
+                  const commentText = typeof comment.text === 'string' ? comment.text : '';
+                  const commentTime = comment.timestamp ? new Date(comment.timestamp).toLocaleTimeString() : '';
+
+                  return (
+                    <div key={comment._id || index} className="flex items-start gap-3">
+                      <div className="flex-shrink-0">
+                        {userPic ? (
+                          <img
+                            src={userPic}
+                            alt={userName}
+                            className="w-8 h-8 rounded-full object-cover border"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.nextElementSibling.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <div className={`w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center border ${userPic ? 'hidden' : ''}`}>
+                          <User className="w-4 h-4 text-blue-600" />
+                        </div>
+                      </div>
+                      <div className="flex-1 bg-gray-50 rounded-lg p-3">
+                        <div className="font-semibold text-sm">{userName}</div>
+                        <div className="text-gray-700 mt-1">{commentText}</div>
+                        {commentTime && (
+                          <div className="text-xs text-gray-500 mt-1">{commentTime}</div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Show more/less comments button */}
+                {hasMoreComments && (
+                  <div className="text-center">
+                    <button
+                      onClick={() => setShowAllComments(!showAllComments)}
+                      className="text-sm text-blue-600 hover:text-blue-800 font-medium transition px-4 py-2 rounded-lg hover:bg-blue-50"
+                    >
+                      {showAllComments ? 'Show fewer comments' : `View all ${comments.length} comments`}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Disabled Action Buttons (Candidates cannot react or comment) */}
+            <div className="flex items-center border-t border-gray-100 pt-2 mt-2 text-gray-400">
+              <div className="flex-1 flex items-center justify-center gap-2 px-2 py-2 rounded-lg cursor-not-allowed">
+                <ThumbsUp size={18} />
+                <span>Like</span>
+                <span className="text-xs ml-1">(View only)</span>
+              </div>
+              <div className="flex-1 flex items-center justify-center gap-2 px-2 py-2 rounded-lg cursor-not-allowed">
+                <MessageCircle size={18} />
+                <span>Comment</span>
+                <span className="text-xs ml-1">(View only)</span>
+              </div>
+            </div>
+          </>
+        );
+      })()}
     </div>
   );
 };
@@ -331,6 +467,12 @@ const PostCreator = ({ user, posts, setPosts, onPostCreated }) => {
     }
     if (isSubmitting) return;
 
+    // Validate user has an ID
+    if (!user || !user.id) {
+      alert("User information is missing. Please log in again.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -346,20 +488,26 @@ const PostCreator = ({ user, posts, setPosts, onPostCreated }) => {
         };
       }
 
-      // Prepare complete post data with all required fields
+      // Prepare post data matching the backend schema
+      // Only send fields that exist in the Post model schema
       const postData = {
-        text: text.trim(),
-        author: user.id,
-        authorName: user.fullName,
-        authorPic: user.photo,
-        media: mediaData,
-        reactionsCount: 0,
-        comments: [],
-        isCandidatePost: true,
-        createdAt: new Date().toISOString()
+        text: text.trim() || '',
+        author: user.id, // Must be a valid Candidate ObjectId
+        reactionsCount: 0
+        // Note: comments field in schema is String with default 0, so we don't send it
+        // createdAt is handled by timestamps option
       };
 
-      console.log("Sending post data with profile pic:", user?.photo ? "YES" : "NO");
+      // Only include media if it exists
+      if (mediaData) {
+        postData.media = mediaData;
+      }
+
+      console.log("Sending post data:", {
+        text: postData.text ? "YES" : "NO",
+        author: postData.author,
+        hasMedia: !!postData.media
+      });
 
       const savedPost = await createPost(postData);
       
@@ -378,7 +526,8 @@ const PostCreator = ({ user, posts, setPosts, onPostCreated }) => {
         authorName: newPost.authorName || user?.fullName,
         authorPic: newPost.authorPic || user?.photo,
         reactionsCount: newPost.reactionsCount || 0,
-        comments: newPost.comments || [],
+        reactions: Array.isArray(newPost.reactions) ? newPost.reactions : [],
+        comments: Array.isArray(newPost.comments) ? newPost.comments : [],
         createdAt: newPost.createdAt || new Date().toISOString()
       };
       
@@ -407,11 +556,16 @@ const PostCreator = ({ user, posts, setPosts, onPostCreated }) => {
       }
     } catch (error) {
       console.error("Failed to create post:", error);
-      alert("Failed to create post. Please check the data and try again.");
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error || 
+                          error.message || 
+                          "Failed to create post. Please check the data and try again.";
+      console.error("Error details:", error.response?.data);
+      alert(errorMessage);
       
       // Show error notification
       if (onPostCreated) {
-        onPostCreated("Failed to create post. Please try again.", "error");
+        onPostCreated(errorMessage, "error");
       }
     } finally {
       setIsSubmitting(false);
@@ -495,7 +649,7 @@ const PostCreator = ({ user, posts, setPosts, onPostCreated }) => {
             <span className="text-sm">Photo</span>
             <input 
               type="file" 
-              accept="image/*" 
+              accept="image/" 
               onChange={(e) => handlePickMedia(e, "image")} 
               className="hidden" 
             />
@@ -505,7 +659,7 @@ const PostCreator = ({ user, posts, setPosts, onPostCreated }) => {
             <span className="text-sm">Video</span>
             <input 
               type="file" 
-              accept="video/*" 
+              accept="video/" 
               onChange={(e) => handlePickMedia(e, "video")} 
               className="hidden" 
             />
@@ -532,7 +686,15 @@ const FeedPage = ({ posts, setPosts, onViewMedia, search, onPostCreated }) => {
       try {
         const data = await getPosts();
         console.log("Fetched posts data:", data);
-        setPosts(data)
+        
+        // Ensure all posts have properly initialized reactions and comments arrays
+        const normalizedPosts = Array.isArray(data) ? data.map(post => ({
+          ...post,
+          reactions: Array.isArray(post.reactions) ? post.reactions.filter(r => r && typeof r === 'object') : [],
+          comments: Array.isArray(post.comments) ? post.comments.filter(c => c && typeof c === 'object') : []
+        })) : [];
+        
+        setPosts(normalizedPosts);
       } catch (error) {
         console.error("Failed to fetch posts:", error);
         setPosts([]);

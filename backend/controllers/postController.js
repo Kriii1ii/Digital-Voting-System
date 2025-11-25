@@ -22,41 +22,60 @@ exports.getPosts = async (req, res) => {
 
     // Get reactions and comments for each post
     const postsWithInteractions = await Promise.all(
-  posts.map(async (post) => {
-    const reactions = await Reaction.find({ post: post._id })
-      .populate('user', 'fullName profilePicture'); // Use profilePicture, not profilePic
-    
-    const comments = await Comment.find({ post: post._id })
-      .populate('user', 'fullName profilePicture') // Use profilePicture here too
-      .sort({ createdAt: -1 });
+      posts.map(async (post) => {
+        try {
+          const reactions = await Reaction.find({ post: post._id })
+            .populate('user', 'fullName profilePicture');
+          
+          const comments = await Comment.find({ post: post._id })
+            .populate('user', 'fullName profilePicture')
+            .sort({ createdAt: -1 });
 
-    return {
-      ...post.toObject(),
-      reactions: reactions.map(r => ({
-        user_id: r.user._id,
-        user: {
-          fullName: r.user.fullName,
-          profilePic: r.user.profilePicture 
-        },
-        type: r.type
-      })),
-      comments: comments.map(c => ({
-        _id: c._id,
-        user_id: c.user._id,
-        user: {
-          fullName: c.user.fullName,
-          profilePic: c.user.profilePicture 
-        },
-        text: c.text,
-        timestamp: c.createdAt
-      }))
-    };
-  })
-);
+          return {
+            ...post.toObject(),
+            reactions: reactions
+              .filter(r => r.user) // Filter out reactions with null user
+              .map(r => ({
+                user_id: r.user._id,
+                user: {
+                  fullName: r.user.fullName || 'Unknown User',
+                  profilePic: r.user.profilePicture || null
+                },
+                type: r.type
+              })),
+            comments: comments
+              .filter(c => c.user) // Filter out comments with null user
+              .map(c => ({
+                _id: c._id,
+                user_id: c.user._id,
+                user: {
+                  fullName: c.user.fullName || 'Unknown User',
+                  profilePic: c.user.profilePicture || null
+                },
+                text: c.text,
+                timestamp: c.createdAt
+              }))
+          };
+        } catch (postErr) {
+          console.error(`Error processing post ${post._id}:`, postErr);
+          // Return post without interactions if there's an error
+          return {
+            ...post.toObject(),
+            reactions: [],
+            comments: []
+          };
+        }
+      })
+    );
     return res.json({ success: true, data: postsWithInteractions });
   } catch (err) {
     console.error("getPosts error:", err);
-    return res.status(500).json({ success: false, error: "Failed to fetch posts" });
+    console.error("Error details:", err.message, err.stack);
+    return res.status(500).json({ 
+      success: false, 
+      error: "Failed to fetch posts",
+      message: err.message 
+    });
   }
 };
 
@@ -65,19 +84,43 @@ exports.createPost = async (req, res) => {
   try {
     // Automatically assign logged-in user as author
     const body = req.body
-    console.log(body)
+    console.log("createPost body:", body);
+    
+    // Validate required fields
+    if (!body.author) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Author field is required",
+        message: "Author (candidate ID) must be provided"
+      });
+    }
+
+    // Validate author is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(body.author)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Invalid author ID",
+        message: "Author must be a valid ObjectId"
+      });
+    }
+
     const post = await Post.create(body);
 
     // Return populated post
     const populated = await Post.findById(post._id)
-      .populate("author", "fullName profilePic role")
+      .populate("author", "fullName photo party")
       .populate("candidate", "fullName photo party")
       .populate("election", "title");
 
     return res.json({ success: true, data: populated });
   } catch (err) {
     console.error("createPost error:", err);
-    return res.status(400).json({ success: false, error: "Failed to create post" });
+    console.error("Error details:", err.message, err.stack);
+    return res.status(400).json({ 
+      success: false, 
+      error: "Failed to create post",
+      message: err.message || "Unknown error occurred"
+    });
   }
 };
 
@@ -86,7 +129,7 @@ exports.updatePost = async (req, res) => {
     const updated = await Post.findByIdAndUpdate(req.params.postId, req.body, {
       new: true,
     })
-      .populate("author", "fullName profilePic role")
+      .populate("author", "fullName profilePicture role")
       .populate("candidate", "fullName photo party")
       .populate("election", "title startDate endDate");
 
@@ -212,7 +255,7 @@ exports.addComment = async (req, res) => {
 
     // Populate the comment with user data before sending response
     const populatedComment = await Comment.findById(comment._id)
-      .populate('user', 'fullName profilePic');
+      .populate('user', 'fullName profilePicture');
 
     // Comment event to frontend
     const io = req.app.get("io");
@@ -252,7 +295,6 @@ exports.editComment = async (req, res) => {
     if (!comment) {
       return res.status(404).json({ success: false, message: "Comment not found" });
     }
-
     // Check owner
     if (comment.user.toString() !== userId) {
       return res.status(403).json({ success: false, message: "You cannot edit this comment" });

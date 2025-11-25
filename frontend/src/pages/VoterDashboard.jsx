@@ -4,12 +4,14 @@ import {
   Camera,
   LogOut,
   User,
+  Users,
+  UserCheck,
   CheckCircle,
   ArrowLeft,
   Trash2,
   Heart,
   MessageCircle,
-  Share,
+
   ThumbsUp,
   Laugh,
   Mail,
@@ -698,51 +700,35 @@ const FeedPage = () => {
     );
   }
 
-  return (
-    <div className="max-w-6xl mx-auto mt-28 px-4">
-      <div className="flex gap-6">
-        <div className="flex-1 max-w-3xl">
-          <div className="mb-6 p-4 bg-white rounded-lg border border-gray-200 shadow-sm flex items-center gap-4">
-        <div className="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden border border-gray-300">
-          {user?.profilePicture ? (
-            <img
-              src={user.profilePicture}
-              alt={user?.fullName}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                e.target.src = "/default-avatar.png";
-              }}
-            />
-          ) : (
-            <div className="w-full h-full bg-blue-100 flex items-center justify-center">
-              <span className="text-blue-800 font-semibold text-lg">
-                {user?.fullName?.charAt(0)}
-              </span>
-            </div>
-          )}
-        </div>
-        <div className="flex-1">
-          <h1 className="text-lg font-semibold text-gray-800">
-            Welcome, {user?.fullName}
-          </h1>
-        </div>
-      </div>
-
-        </div>
-
-        <aside className="w-96 shrink-0">
-          <div className="sticky top-28 space-y-4">
-            {/* Animated chart: trends */}
-            <div>
-              <AnimatedPoll electionId={'mock-election'} />
-            </div>
-
-            {/* Prediction summary below */}
-            <div>
-              <PredictionPoll electionId={'mock-election'} refreshInterval={3000} />
-            </div>
+return (
+  <div className="relative max-w-6xl mx-auto mt-28 px-8">
+    <div className="max-w-3xl mx-auto">
+      <div className="sticky top-24 z-10">
+        <div className="mb-6 p-4 bg-white rounded-lg border border-gray-200 shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden border border-gray-300">
+            {user?.profilePicture ? (
+              <img
+                src={user.profilePicture}
+                alt={user?.fullName}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.target.src = "/default-avatar.png";
+                }}
+              />
+            ) : (
+              <div className="w-full h-full bg-blue-100 flex items-center justify-center">
+                <span className="text-blue-800 font-semibold text-lg">
+                  {user?.fullName?.charAt(0)}
+                </span>
+              </div>
+            )}
           </div>
-        </aside>
+          <div className="flex-1">
+            <h1 className="text-lg font-semibold text-gray-800">
+              Welcome, {user?.fullName}
+            </h1>
+          </div>
+        </div>
       </div>
 
       {postsLoading ? (
@@ -771,14 +757,29 @@ const FeedPage = () => {
         ))
       )}
     </div>
-  );
+    
+    <div className="hidden md:block">
+      <div className="fixed top-28 right-10 w-79 space-y-1">
+        <div className="mb-4 bg-white rounded-lg border border-gray-200 shadow-sm p-3">
+          <PredictionPoll
+            electionId={"mock-election"}
+            refreshInterval={3000}
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+
+
 };
 
 
 // PROFILE PAGE 
 const ProfilePage = () => {
   const { user, updateUser } = useAuth();
-  const [isEditingBio, setIsEditingBio] = useState(false);
+  const [setIsEditingBio] = useState(false);
   const [bioText, setBioText] = useState(user?.bio || "");
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
@@ -854,22 +855,6 @@ const ProfilePage = () => {
         console.error("Error removing profile picture:", error);
         alert("Failed to remove profile picture");
       }
-    }
-  };
-
-  const saveBio = async () => {
-    try {
-      const response = await updateUserProfile(user.id, { bio: bioText });
-
-      if (response.data) {
-        updateUser({ bio: bioText });
-      }
-
-      setIsEditingBio(false);
-      alert("Bio updated successfully!");
-    } catch (error) {
-      console.error("Error updating bio:", error);
-      alert("Failed to update bio");
     }
   };
 
@@ -977,15 +962,13 @@ const VoteNowPage = () => {
   const [voted, setVoted] = useState(false);
   const [candidates, setCandidates] = useState([]);
   const [candidatesLoading, setCandidatesLoading] = useState(true);
-  const [pendingCandidate, setPendingCandidate] = useState(null);
-  const [showVerifier, setShowVerifier] = useState(false);
-  const [verifLoading, setVerifLoading] = useState(false);
-  const [verifError, setVerifError] = useState(null);
   const [elections, setElections] = useState([]);
   const [showCandidateDetail, setShowCandidateDetail] = useState(false);
   const [selectedCandidateDetail, setSelectedCandidateDetail] = useState(null);
   const [hasVoted, setHasVoted] = useState(false);
   const [fetchError, setFetchError] = useState(null);
+  const [votingInProgress, setVotingInProgress] = useState(false);
+  const [activeElection, setActiveElection] = useState(null);
 
   // Check if user has already voted
   useEffect(() => {
@@ -1000,36 +983,59 @@ const VoteNowPage = () => {
     checkVoteStatus();
   }, [user]);
 
-  // Fetch candidates and elections
+  // Fetch elections and candidates
   useEffect(() => {
     const fetchData = async () => {
       try {
         setCandidatesLoading(true);
         setFetchError(null);
         
-        console.log("Fetching candidates and elections...");
+        console.log("Fetching elections and candidates...");
         
-        const [candidatesData, electionsData] = await Promise.all([
-          getCandidates(),
-          getElections()
-        ]);
-        
-        console.log("Candidates response:", candidatesData);
+        const electionsData = await getElections();
         console.log("Elections response:", electionsData);
 
         // Handle different response structures
-        const candidatesArray = candidatesData.results || candidatesData.data || candidatesData || [];
         const electionsArray = electionsData.results || electionsData.data || electionsData || [];
-
-        setCandidates(Array.isArray(candidatesArray) ? candidatesArray : []);
         setElections(Array.isArray(electionsArray) ? electionsArray : []);
 
-        console.log("Processed candidates:", candidatesArray);
-        console.log("Processed elections:", electionsArray);
+        // Find active election (ongoing status)
+        const activeElection = electionsArray.find(election => 
+          election.status === 'ongoing' || 
+          election.isActive === true ||
+          (new Date(election.startDate) <= new Date() && new Date(election.endDate) >= new Date())
+        );
+        
+        if (activeElection) {
+          setActiveElection(activeElection);
+          console.log("Active election found:", activeElection);
+
+          // Get candidates for this specific election
+          // The candidates are already included in the election data from your controller
+          if (activeElection.candidates && activeElection.candidates.length > 0) {
+            console.log("Candidates from election data:", activeElection.candidates);
+            setCandidates(activeElection.candidates);
+          } else {
+            // If candidates aren't included, fetch them separately
+            console.log("No candidates in election data, fetching separately...");
+            const candidatesData = await getCandidates();
+            const candidatesArray = candidatesData.results || candidatesData.data || candidatesData || [];
+            
+            // Filter candidates for this election (if candidate has election field)
+            const electionCandidates = candidatesArray.filter(candidate => 
+              candidate.election && candidate.election.toString() === activeElection._id.toString()
+            );
+            setCandidates(electionCandidates);
+            console.log("Filtered candidates for election:", electionCandidates);
+          }
+        } else {
+          console.log("No active election found");
+          setCandidates([]);
+        }
 
       } catch (err) {
         console.error("Failed to fetch data:", err);
-        setFetchError("Failed to load candidates. Please try again later.");
+        setFetchError("Failed to load election data. Please try again later.");
         setCandidates([]);
         setElections([]);
       } finally {
@@ -1045,65 +1051,100 @@ const VoteNowPage = () => {
     setShowCandidateDetail(true);
   };
 
-  const handleVote = (candidate) => {
+  const handleVote = async (candidate) => {
     if (hasVoted) {
       alert("You have already voted. You can only vote once.");
       return;
     }
 
-    if (elections.length === 0) {
-      alert("No active elections found. Please try again later.");
+    if (!activeElection) {
+      alert("No active election found. Please try again later or contact administrator.");
       return;
     }
 
-    console.log("Vote button clicked for:", candidate.fullName);
-    setPendingCandidate(candidate);
-    setVerifError(null);
-    setShowVerifier(true);
-  };
+    if (!candidate._id) {
+      alert("Invalid candidate selected. Please try again.");
+      return;
+    }
 
-  const onVerificationComplete = async () => {
+    // Verify this candidate belongs to the active election
+    if (candidate.election && candidate.election.toString() !== activeElection._id.toString()) {
+      alert("This candidate is not participating in the current election. Please select a valid candidate.");
+      return;
+    }
+
+    const confirmVote = window.confirm(
+      `Are you sure you want to vote for ${candidate.fullName} from ${candidate.partyName}?\n\nThis action cannot be undone.`
+    );
+
+    if (!confirmVote) {
+      return;
+    }
+
     try {
-      setVerifLoading(true);
-      setShowVerifier(false);
+      setVotingInProgress(true);
 
-      if (!pendingCandidate) {
-        throw new Error("No candidate selected for vote");
-      }
-
-      if (!elections[0]?._id) {
-        throw new Error("No active election found");
-      }
-
-      console.log("Voting for candidate:", pendingCandidate._id);
-      console.log("In election:", elections[0]._id);
+      console.log("Voting details:", {
+        electionId: activeElection._id,
+        candidateId: candidate._id,
+        voterId: user.id,
+        candidateName: candidate.fullName || candidate.name,
+        electionTitle: activeElection.title
+      });
 
       const voteResponse = await castVote({
-        electionId: elections[0]._id,
-        candidateId: pendingCandidate._id,
-        voterId: user.voterId || user.VoterId
+
+        electionId: activeElection._id,
+        candidateId: candidate._id,
+        voterId: user.id
 
       });
 
       console.log("Vote response:", voteResponse);
 
       if (voteResponse.success) {
-        setSelectedCandidate(pendingCandidate);
+        setSelectedCandidate(candidate);
         setVoted(true);
         setHasVoted(true);
         setShowCandidateDetail(false);
         localStorage.setItem(`hasVoted_${user?.id}`, 'true');
-        setPendingCandidate(null);
         
         alert("Vote cast successfully! Thank you for participating.");
       } else {
-        throw new Error(voteResponse.message || "Failed to cast vote");
+        // Handle specific error messages from backend
+        const errorMessage = voteResponse.message || "Failed to cast vote";
+        
+        if (errorMessage.includes('Invalid candidate')) {
+          throw new Error("This candidate is not valid for the current election. Please select a different candidate.");
+        } else if (errorMessage.includes('already voted')) {
+          throw new Error("You have already voted in this election.");
+        } else if (errorMessage.includes('election')) {
+          throw new Error("The election is not active or has ended.");
+        } else {
+          throw new Error(errorMessage);
+        }
       }
     } catch (err) {
       console.error("Voting failed:", err);
-      setVerifError(err.message || "Vote failed. Please try again.");
+      
+      // Handle different types of errors
+      if (err.response) {
+        // Backend returned an error response
+        const backendError = err.response.data;
+        if (backendError.message) {
+          alert(`Voting failed: ${backendError.message}`);
+        } else {
+          alert("Failed to cast vote. Please try again.");
+        }
+      } else if (err.request) {
+        // Network error
+        alert("Network error. Please check your connection and try again.");
+      } else {
+        // Other errors
+        alert(err.message || "Failed to cast vote. Please try again.");
+      }
     } finally {
-      setVerifLoading(false);
+      setVotingInProgress(false);
     }
   };
 
@@ -1140,19 +1181,49 @@ const VoteNowPage = () => {
     );
   }
 
+  // Show election status
+  if (!activeElection && !candidatesLoading) {
+    return (
+      <div className="max-w-4xl mx-auto mt-28 px-4">
+        <div className="text-center bg-white p-10 rounded-xl shadow-lg border border-yellow-200">
+          <Calendar className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4">No Active Election</h2>
+          <p className="text-gray-600 mb-6">
+            There is currently no active election. Please check back later or contact the election administrator.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Candidate Detail View
   if (showCandidateDetail && selectedCandidateDetail) {
     return (
       <div className="max-w-4xl mx-auto mt-28 px-4">
-        <div className="bg-white rounded-xl shadow-lg border p-6">
+        <div className="bg-white rounded-xl shadow-lg border p-6 cursor-default">
           {/* Back Button */}
           <button
             onClick={handleBackToList}
-            className="flex items-center gap-2 mb-6 text-gray-600 hover:text-gray-700 transition-colors"
+            className="flex items-center gap-2 mb-6 text-gray-600 hover:text-gray-700 transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-5 h-5" />
             <span>Back to Election</span>
           </button>
+
+          {/* Election Info */}
+          {activeElection && (
+            <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <h3 className="text-lg font-semibold text-blue-800 mb-2">
+                {activeElection.title || "Current Election"}
+              </h3>
+              <p className="text-blue-600 text-sm">
+                {activeElection.description || "Cast your vote in the current election"}
+              </p>
+              <p className="text-blue-600 text-sm mt-1">
+                Status: <span className="font-semibold capitalize">{activeElection.status || 'active'}</span>
+              </p>
+            </div>
+          )}
 
           <div className="flex flex-col md:flex-row gap-8">
             {/* Candidate Photo and Basic Info */}
@@ -1186,7 +1257,7 @@ const VoteNowPage = () => {
                 </h1>
                 <div className="flex items-center justify-center md:justify-start gap-2 mb-1">
                   <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
-                    {selectedCandidateDetail.partyName }
+                    {selectedCandidateDetail.partyName}
                   </span>
                 </div>
                 <p className="text-gray-600">{selectedCandidateDetail.position}</p>
@@ -1196,9 +1267,17 @@ const VoteNowPage = () => {
               {!hasVoted && (
                 <button
                   onClick={() => handleVote(selectedCandidateDetail)}
-                  className="w-full md:w-auto px-8 py-3 mt-8 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors font-semibold text-lg shadow-lg"
+                  disabled={votingInProgress}
+                  className="w-full md:w-auto px-8 py-3 mt-8 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors font-semibold text-lg shadow-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Vote for {selectedCandidateDetail.fullName}
+                  {votingInProgress ? (
+                    <>
+                      <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Casting Vote...
+                    </>
+                  ) : (
+                    `Vote for ${selectedCandidateDetail.fullName}`
+                  )}
                 </button>
               )}
             </div>
@@ -1236,7 +1315,7 @@ const VoteNowPage = () => {
                     <div>
                       <label className="text-sm font-medium text-gray-500">Party</label>
                       <p className="text-gray-800 mt-1 font-medium">
-                        {selectedCandidateDetail.partyName || selectedCandidateDetail.party || "N/A"}
+                        {selectedCandidateDetail.partyName || "N/A"}
                       </p>
                     </div>
                   </div>
@@ -1271,7 +1350,7 @@ const VoteNowPage = () => {
                     />
                     <div>
                       <p className="font-semibold text-gray-800 text-lg">
-                        {selectedCandidateDetail.partyName || selectedCandidateDetail.party}
+                        {selectedCandidateDetail.partyName}
                       </p>
                     </div>
                   </div>
@@ -1289,46 +1368,6 @@ const VoteNowPage = () => {
             </div>
           )}
         </div>
-
-        {/* Verification Modal */}
-        {showVerifier && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Verification Required</h3>
-                <button
-                  onClick={() => {
-                    setShowVerifier(false);
-                    setPendingCandidate(null);
-                  }}
-                  className="text-sm text-gray-600 hover:text-gray-800"
-                >
-                  Cancel
-                </button>
-              </div>
-              <p className="text-sm text-gray-600 mb-4">
-                Please verify your identity to vote for <strong>{pendingCandidate?.fullName}</strong>.
-              </p>
-
-              <div className="p-4 border rounded bg-gray-50 text-center">
-                <p className="mb-4">Verification component would appear here</p>
-                <button
-                  onClick={onVerificationComplete}
-                  className="px-4 py-2 bg-blue-800 text-white rounded hover:bg-blue-900 disabled:opacity-50"
-                  disabled={verifLoading}
-                >
-                  {verifLoading ? "Verifying..." : "Simulate Verification"}
-                </button>
-              </div>
-
-              {verifError && (
-                <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-600">
-                  {verifError}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
     );
   }
@@ -1346,9 +1385,18 @@ const VoteNowPage = () => {
           Vote for Change
         </h2>
 
-        <p className="text-2xl font-semibold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-          Select Your Representative
-        </p>
+        {activeElection && (
+          <>
+            <p className="text-2xl font-semibold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              {activeElection.title}
+            </p>
+            {activeElection.description && (
+              <p className="text-gray-600 mb-4 max-w-2xl mx-auto">
+                {activeElection.description}
+              </p>
+            )}
+          </>
+        )}
 
         <p className="text-gray-600 mt-4 max-w-2xl mx-auto text-lg">
           Click on any candidate to view their complete profile and manifesto
@@ -1364,7 +1412,7 @@ const VoteNowPage = () => {
           <p className="text-red-700 font-medium">{fetchError}</p>
           <button
             onClick={() => window.location.reload()}
-            className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+            className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors cursor-pointer"
           >
             Retry
           </button>
@@ -1387,11 +1435,11 @@ const VoteNowPage = () => {
       ) : candidates.length === 0 ? (
         <div className="col-span-3 text-center text-gray-500 py-8 bg-white rounded-lg border border-gray-200">
           <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <p className="text-lg mb-2">No candidates available</p>
-          <p className="text-gray-600 mb-4">Candidates will appear here once registered by the electoral committee.</p>
+          <p className="text-lg mb-2">No candidates available for this election</p>
+          <p className="text-gray-600 mb-4">Candidates will appear here once registered for the election.</p>
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors"
+            className="px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors cursor-pointer"
           >
             Refresh
           </button>
@@ -1430,10 +1478,11 @@ const VoteNowPage = () => {
               </div>
 
               {/* Candidate Info */}
-              <h3 className="font-bold text-gray-800 text-xl mb-2">{(candidateNameMap[(candidate._id || candidate.id || candidate.name || '').toString().toLowerCase()] ?? candidate.fullName ?? candidate.name) ?? "Unnamed Candidate"}</h3>
+
+              <h3 className="font-bold text-gray-800 text-xl mb-2">{candidate.fullName}</h3>
               <div className="mb-3">
                 <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
-                  {candidate.partyName || candidate.party || "Independent"}
+                  {candidate.partyName || "Independent"}
                 </span>
               </div>
               <div className="mb-3">
@@ -1455,52 +1504,20 @@ const VoteNowPage = () => {
                   e.stopPropagation();
                   handleVote(candidate);
                 }}
-                className="w-full px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors font-medium shadow-md"
+                disabled={votingInProgress}
+                className="w-full px-4 py-2 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors font-medium shadow-md cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Cast Vote
+                {votingInProgress ? (
+                  <>
+                    <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Casting Vote...
+                  </>
+                ) : (
+                  "Cast Vote"
+                )}
               </button>
             </div>
           ))}
-        </div>
-      )}
-
-      {/* Verification Modal */}
-      {showVerifier && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Verification Required</h3>
-              <button
-                onClick={() => {
-                  setShowVerifier(false);
-                  setPendingCandidate(null);
-                }}
-                className="text-sm text-gray-600 hover:text-gray-800"
-              >
-                Cancel
-              </button>
-            </div>
-            <p className="text-sm text-gray-600 mb-4">
-              Please verify your identity to vote for <strong>{pendingCandidate?.fullName}</strong>.
-            </p>
-
-            <div className="p-4 border rounded bg-gray-50 text-center">
-              <p className="mb-4">Verification component would appear here</p>
-              <button
-                onClick={onVerificationComplete}
-                className="px-4 py-2 bg-blue-800 text-white rounded hover:bg-blue-900 disabled:opacity-50"
-                disabled={verifLoading}
-              >
-                {verifLoading ? "Verifying..." : "Simulate Verification"}
-              </button>
-            </div>
-
-            {verifError && (
-              <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-600">
-                {verifError}
-              </div>
-            )}
-          </div>
         </div>
       )}
     </div>

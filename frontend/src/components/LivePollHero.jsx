@@ -13,9 +13,7 @@ export default function LivePollHero({ electionId, title }) {
               <LivePoll electionId={electionId} refreshInterval={4000} />
             </div>
           </div>
-          <div className="w-40 h-40 md:w-48 md:h-48 rounded-xl bg-white/60 flex items-center justify-center">
-            <img src="/ai_icon.png" alt="AI" className="w-24 h-24 object-contain" />
-          </div>
+         
         </div>
       </div>
     </section>
