@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Chatbot from "./Chatbot";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useAuth } from "../contexts/AuthContext";
@@ -335,6 +336,9 @@ const Heropg = () => {
           )}
         </div>
       </div>
+
+      {/* Chatbot (only on hero page) */}
+      <Chatbot />
 
       {/* Footer */}
       <footer className="w-full bg-blue-50 border-t border-black relative">
