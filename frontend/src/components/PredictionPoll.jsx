@@ -51,7 +51,11 @@ export default function PredictionPoll({ electionId, refreshInterval = 10000 }) 
     if (!electionId) return;
 
     try {
-      socketRef.current = ioClient(window.location.origin, {
+      const SOCKET_SERVER = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_BACKEND_URL)
+        ? import.meta.env.VITE_BACKEND_URL
+        : (typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname}:5001` : 'http://localhost:5001');
+
+      socketRef.current = ioClient(SOCKET_SERVER, {
         transports: ['websocket'],
       });
 
@@ -144,11 +148,23 @@ export default function PredictionPoll({ electionId, refreshInterval = 10000 }) 
                 <div
                   style={{
                     width: `${pct}%`,
-                    background: 'linear-gradient(90deg,#06b6d4,#f97316)',
+                    background: 'linear-gradient(90deg,#1f2937,#f97316)',
                     height: '100%',
                   }}
                 />
               </div>
+              {/* recent comments / sentiment */}
+              {c.recent_comments && c.recent_comments.length > 0 && (
+                <div className="mt-2 text-xs text-gray-600 space-y-1">
+                  {c.recent_comments.slice().reverse().map((cm, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${cm.sentiment > 0 ? 'bg-green-400' : cm.sentiment < 0 ? 'bg-red-400' : 'bg-gray-300'}`} />
+                      <div className="truncate">{cm.text}</div>
+                      <div className="ml-auto text-gray-400">{cm.sentiment > 0 ? `+${(cm.sentiment*100).toFixed(0)}%` : `${(cm.sentiment*100).toFixed(0)}%`}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}

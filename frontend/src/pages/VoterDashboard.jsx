@@ -32,6 +32,7 @@ import {
 } from "../api/endpoints";
 import { useAuth } from "../contexts/AuthContext";
 import PredictionPoll from "../components/PredictionPoll";
+import AnimatedPoll from "../components/AnimatedPoll";
 
 // NAVBAR 
 const Navbar = ({ setPage }) => {
@@ -697,8 +698,10 @@ const FeedPage = () => {
   }
 
   return (
-    <div className="max-w-2xl mx-auto mt-28 px-4">
-      <div className="mb-6 p-4 bg-white rounded-lg border border-gray-200 shadow-sm flex items-center gap-4">
+    <div className="max-w-6xl mx-auto mt-28 px-4">
+      <div className="flex gap-6">
+        <div className="flex-1 max-w-3xl">
+          <div className="mb-6 p-4 bg-white rounded-lg border border-gray-200 shadow-sm flex items-center gap-4">
         <div className="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden border border-gray-300">
           {user?.profilePicture ? (
             <img
@@ -724,9 +727,21 @@ const FeedPage = () => {
         </div>
       </div>
 
-      {/* Prediction Poll visible to voters */}
-      <div className="mb-6">
-        <PredictionPoll electionId={null} refreshInterval={10000} />
+        </div>
+
+        <aside className="w-96 shrink-0">
+          <div className="sticky top-28 space-y-4">
+            {/* Animated chart: trends */}
+            <div>
+              <AnimatedPoll electionId={'mock-election'} />
+            </div>
+
+            {/* Prediction summary below */}
+            <div>
+              <PredictionPoll electionId={'mock-election'} refreshInterval={3000} />
+            </div>
+          </div>
+        </aside>
       </div>
 
       {postsLoading ? (

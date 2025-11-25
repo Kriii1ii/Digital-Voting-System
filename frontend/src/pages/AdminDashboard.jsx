@@ -44,6 +44,8 @@ import {
 import LivePoll from "../components/LivePoll";
 import LivePollHero from "../components/LivePollHero";
 import PredictionPoll from "../components/PredictionPoll";
+import AnimatedPoll from "../components/AnimatedPoll";
+import AdminControls from "../components/AdminControls";
 import { useAuth } from "../contexts/AuthContext";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
@@ -662,10 +664,14 @@ const AdminDashboard = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="md:col-span-2">
-          <LivePollHero electionId={null} title="Live AI Winner Prediction" />
+          <LivePollHero electionId={'mock-election'} title="Live AI Winner Prediction" />
         </div>
         <div className="md:col-span-1">
-          <PredictionPoll electionId={null} refreshInterval={10000} />
+          <div className="space-y-4">
+            <AnimatedPoll electionId={'mock-election'} />
+            <AdminControls electionId={'mock-election'} />
+            <PredictionPoll electionId={'mock-election'} refreshInterval={3000} />
+          </div>
         </div>
       </div>
 
