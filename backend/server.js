@@ -1,40 +1,49 @@
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
-const cors = require('cors');
-const helmet = require('helmet');
-const dotenv = require('dotenv');
-const morgan = require('morgan');
-const rateLimit = require('express-rate-limit');
-const events = require('events');
+const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
+const helmet = require("helmet");
+const dotenv = require("dotenv");
+const morgan = require("morgan");
+const rateLimit = require("express-rate-limit");
+const events = require("events");
 
-
-// Local Imports (Configuration and Database)
-const connectDB = require('./config/db.js');
-
-// Events Emitter Configuration
-events.defaultMaxListeners = 20; // or 0 for unlimited, but 20 is safer
-
-// Routes (CommonJS requires)
-const electionRoutes = require('./routes/election.js');
-const resultsRoutes = require('./routes/results.js');
-const predictionRoutes = require('./routes/prediction.js');
-const authRoutes = require('./routes/auth.js');
-const candidateRoutes = require('./routes/candidate.js');
-const VoterRoutes = require('./routes/voter.js');
-const VoteRoutes = require('./routes/vote.js');
-// Biometric routes (added during integration)
-const biometricRoutes = require('./routes/biometrics.js');
-// Post routes for reactions/comments
-const postRoutes = require('./routes/postRoutes.js');
-const adminRoutes = require('./routes/admin.js');
-const contactRoutes = require("./routes/contact.js");
-const userRoutes = require("./routes/users.js");
 dotenv.config();
 
-// Initialize app and connect DB
+// Local Imports
+const connectDB = require("./config/db.js");
+
+// Route Imports
+const electionRoutes = require("./routes/election.js");
+const resultsRoutes = require("./routes/results.js");
+const predictionRoutes = require("./routes/prediction.js");
+const authRoutes = require("./routes/auth.js");
+const candidateRoutes = require("./routes/candidate.js");
+const VoterRoutes = require("./routes/voter.js");
+const VoteRoutes = require("./routes/vote.js");
+const biometricRoutes = require("./routes/biometrics.js");
+const postRoutes = require("./routes/postRoutes.js");
+const adminRoutes = require("./routes/admin.js");
+const contactRoutes = require("./routes/contact.js");
+const userRoutes = require("./routes/users.js");
+const predictionsApiRoutes = require("./routes/predictions.js");
+const adminRepairRoutes = require("./routes/adminRepair.js");
+const statusRoutes = require("./routes/status.js");
+
+// Event listener safety
+events.defaultMaxListeners = 20;
+
+// Initialize app
 const app = express();
-// Simplified CORS middleware: whitelist specific origins and allow credentials.
+
+// Connect database
+connectDB();
+
+// JSON parser
+app.use(express.json({ limit: "10mb" }));
+
+// ======================================================
+// ✅ FIXED + CLEAN CORS FOR VERCEL + RENDER
+// ======================================================
 const allowedOrigins = [
   "https://digitalvotingsystem9.vercel.app",
   "http://localhost:3000",
@@ -44,201 +53,178 @@ const allowedOrigins = [
 
 app.use((req, res, next) => {
   const origin = req.headers.origin;
+
   if (allowedOrigins.includes(origin)) {
-    res.header("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Origin", origin);
   } else {
-    // Log blocked origins so you can see them in Render logs
-    console.warn("CORS BLOCKED:", origin);
+    console.warn("❌ CORS BLOCKED:", origin);
   }
-  res.header("Access-Control-Allow-Credentials", "true");
-  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH,OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  if (req.method === "OPTIONS") return res.sendStatus(200);
+
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET,POST,PUT,DELETE,PATCH,OPTIONS"
+  );
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization"
+  );
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200); // Preflight success
+  }
+
   next();
 });
-      console.warn("CORS BLOCKED ORIGIN:", origin, "Allowed:", FRONTEND_URLS);
-      return callback(new Error("Not allowed by CORS"));
-    },
 
-
-    methods: ["GET", "POST", "PUT","PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
-    preflightContinue: false,
-    optionsSuccessStatus: 200,
-  })
-);
-
-// Explicitly handle OPTIONS for all routes
-
-
+// ======================================================
+// SECURITY + LOGGING
+// ======================================================
 app.use(helmet());
-app.use(morgan('dev'));
+app.use(morgan("dev"));
 
-// Rate limiter - relaxed for development with localhost bypass
+// ======================================================
+// RATE LIMITER
+// ======================================================
 const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // Relaxed for development (quality-check polling needs this)
-  message: 'Too many requests from this IP, try again later.',
-  skip: (req, res) => {
-    // Skip rate limiting for localhost
-    const ip = req.ip || req.connection.remoteAddress || '';
-    const isLocalhost = ip === '::1' || ip === '127.0.0.1' || ip === 'localhost' || 
-           ip.includes('127.0.0.1') || ip.includes('localhost') ||
-           ip.includes('::ffff:127.0.0.1');
-    
-    // ✅ IMPORTANT: Always skip rate limiting for CORS preflight OPTIONS requests
-    const isOptions = req.method === 'OPTIONS';
-    
-    return isLocalhost || isOptions;
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
+  skip: (req) => {
+    const ip = req.ip || "";
+    const isLocal =
+      ip.includes("127.0.0.1") ||
+      ip.includes("localhost") ||
+      ip === "::1";
+    return req.method === "OPTIONS" || isLocal;
   },
-  standardHeaders: true,
-  legacyHeaders: false,
 });
 
 app.use(globalLimiter);
 
-// Basic routes
-app.get('/', (req, res) =>
-  res.status(200).send('Real-Time Digital Voting System Backend Running')
+// ======================================================
+// BASIC ROUTES
+// ======================================================
+app.get("/", (req, res) =>
+  res.status(200).send("Real-Time Digital Voting System Backend Running")
 );
 
-app.get('/api/health', (req, res) =>
-  res.status(200).json({ status: 'OK', message: 'Backend is healthy' })
+app.get("/api/health", (req, res) =>
+  res.status(200).json({ status: "OK", message: "Backend is healthy" })
 );
 
-// // Example in Express
-// app.get("/api/posts", (req, res) => {
-//   res.send(posts); // if this exists
-// });
-
-// API routes
-app.use('/api/auth', authRoutes);
-app.use('/api/candidates', candidateRoutes);
-app.use('/api/elections', electionRoutes);
-app.use('/api/results', resultsRoutes);
-app.use('/api/prediction', predictionRoutes);
-app.use('/api/predictions', require('./routes/predictions'));
-app.use('/api/voters', VoterRoutes);
-app.use('/api/votes', VoteRoutes);
-// Biometric API mount
-app.use('/api/biometrics', biometricRoutes);
-// Post API (reactions/comments)
-app.use('/api/posts', postRoutes);
-app.use('/api/admin', adminRoutes);
+// ======================================================
+// API ROUTES
+// ======================================================
+app.use("/api/auth", authRoutes);
+app.use("/api/candidates", candidateRoutes);
+app.use("/api/elections", electionRoutes);
+app.use("/api/results", resultsRoutes);
+app.use("/api/prediction", predictionRoutes);
+app.use("/api/predictions", predictionsApiRoutes);
+app.use("/api/voters", VoterRoutes);
+app.use("/api/votes", VoteRoutes);
+app.use("/api/biometrics", biometricRoutes);
+app.use("/api/posts", postRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/users", userRoutes);
-// Admin repair and system status endpoints
-app.use('/api/admin-repair', require('./routes/adminRepair'));
-app.use('/api/status', require('./routes/status'));
-// 404 handler
-app.use((req, res) => res.status(404).json({ message: 'Route not found' }));
+app.use("/api/admin-repair", adminRepairRoutes);
+app.use("/api/status", statusRoutes);
 
-// Global error handler
+// 404 Handler
+app.use((req, res) =>
+  res.status(404).json({ message: "Route not found" })
+);
+
+// Global Error Handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error("GLOBAL ERROR:", err);
   res.status(err.status || 500).json({
     success: false,
-    message: err.message || 'Server Error',
+    message: err.message || "Server Error",
   });
 });
 
-// Create server and attach socket.io
-// Prefer an env override for PORT to avoid local service conflicts
+// ======================================================
+// SERVER + SOCKET.IO
+// ======================================================
 const PORT = process.env.PORT || 5000;
 const server = http.createServer(app);
 
+// Clean Socket.IO CORS
 const io = new Server(server, {
   cors: {
-    origin: function (origin, callback) {
-      // allow server-to-server calls
-      if (!origin) return callback(null, true);
-      const cleaned = origin.replace(/\/$/, '');
-      if (FRONTEND_URLS.includes(cleaned) || (process.env.FRONTEND_URL && cleaned === process.env.FRONTEND_URL.replace(/\/$/, ''))) {
-        return callback(null, true);
-      }
-      return callback(new Error('Not allowed by CORS'));
-    },
+    origin: allowedOrigins,
     credentials: true,
   },
 });
 
-// expose io on the express app for controllers to emit events without circular imports
-app.set('io', io);
+// Expose Socket.IO to controllers
+app.set("io", io);
 
-// initialize prediction watcher to emit updates on DB changes
-// initialize prediction watcher (DISABLED IN PRODUCTION)
-const initPredictionWatcher = require('./realtime/predictionWatcher.js');
+// ======================================================
+// DISABLE WATCHERS IN PRODUCTION
+// ======================================================
+const initPredictionWatcher = require("./realtime/predictionWatcher.js");
 
 if (process.env.NODE_ENV !== "production") {
   try {
-    initPredictionWatcher(io).catch?.((err) =>
-      console.error('Prediction watcher failed to start:', err)
+    initPredictionWatcher(io).catch((err) =>
+      console.error("Prediction watcher failed:", err)
     );
   } catch (err) {
-    console.error('Could not initialize prediction watcher:', err);
+    console.error("Prediction watcher init error:", err);
   }
 } else {
-  console.log("🚫 Prediction watcher disabled in production (MongoDB free tier)");
+  console.log("🚫 Prediction watcher disabled in production");
 }
 
-
-// Start mock votes (DISABLED IN PRODUCTION)
-try {
-  if (process.env.NODE_ENV !== 'production' && process.env.ENABLE_MOCK_VOTES !== 'false') {
-    const initMockVotes = require('./realtime/mockVotes.js');
-    initMockVotes(io).catch?.((err) =>
-      console.error('Mock votes failed to start:', err)
+// Mock votes
+if (process.env.NODE_ENV !== "production") {
+  try {
+    const initMockVotes = require("./realtime/mockVotes.js");
+    initMockVotes(io).catch((err) =>
+      console.error("Mock votes failed:", err)
     );
-  } else {
-    console.log("🚫 Mock votes disabled in production");
+  } catch (err) {
+    console.error("Mock Votes Init Error:", err);
   }
-} catch (err) {
-  console.error('Could not initialize mock votes:', err);
+} else {
+  console.log("🚫 Mock votes disabled in production");
 }
 
-// Socket.IO logic
-io.on('connection', (socket) => {
-  console.log('Socket connected:', socket.id, 'from', socket.handshake.address);
+// ======================================================
+// SOCKET.IO EVENTS
+// ======================================================
+io.on("connection", (socket) => {
+  console.log("Socket connected:", socket.id);
 
-  // Join a prediction room. Supports legacy 'joinElection' and new 'joinPrediction'
-  socket.on('joinPrediction', (electionId) => {
-    try {
-      const room = `prediction:${electionId}`;
-      socket.join(room);
-      console.log(`Socket ${socket.id} joined room ${room}`);
-    } catch (e) {
-      console.warn('joinPrediction error', e?.message || e);
-    }
+  socket.on("joinPrediction", (electionId) => {
+    const room = `prediction:${electionId}`;
+    socket.join(room);
+    console.log(`Socket ${socket.id} joined ${room}`);
   });
 
-  socket.on('joinElection', (electionId) => {
-    // legacy support: map to prediction:<id>
-    try {
-      const room = `prediction:${electionId}`;
-      socket.join(room);
-      console.log(`Socket ${socket.id} joined legacy room ${room}`);
-    } catch (e) {
-      console.warn('joinElection error', e?.message || e);
-    }
+  socket.on("leavePrediction", (electionId) => {
+    const room = `prediction:${electionId}`;
+    socket.leave(room);
+    console.log(`Socket ${socket.id} left ${room}`);
   });
 
-  socket.on('leavePrediction', (electionId) => {
-    try {
-      const room = `prediction:${electionId}`;
-      socket.leave(room);
-      console.log(`Socket ${socket.id} left room ${room}`);
-    } catch (e) {
-      console.warn('leavePrediction error', e?.message || e);
-    }
-  });
-
-  socket.on('disconnect', (reason) => {
-    console.log('Socket disconnected:', socket.id, 'reason:', reason);
+  socket.on("disconnect", () => {
+    console.log("Socket disconnected:", socket.id);
   });
 });
 
-// Start server
-server.listen(PORT, () =>
-  console.log(`Server running on http://localhost:${PORT}`)
-);
+// ======================================================
+// START SERVER
+// ======================================================
+// Bind to 0.0.0.0 in container environments to accept external connections
+const HOST = process.env.HOST || '0.0.0.0';
+server.listen(PORT, HOST, () => {
+  const addr = server.address() || {};
+  const boundAddress = (addr.address === '::' || addr.address === '0.0.0.0') ? '0.0.0.0' : addr.address || HOST;
+  const boundPort = addr.port || PORT;
+  console.log(`🚀 Server listening on http://${boundAddress}:${boundPort}`);
+  console.log(`🔒 Allowed CORS origins: ${allowedOrigins.join(', ')}`);
+});
