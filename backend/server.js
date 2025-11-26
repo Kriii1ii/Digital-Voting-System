@@ -34,41 +34,28 @@ dotenv.config();
 
 // Initialize app and connect DB
 const app = express();
-connectDB();
-// Middleware
-app.use(express.json({ limit: '10mb' }));
+// Simplified CORS middleware: whitelist specific origins and allow credentials.
+const allowedOrigins = [
+  "https://digitalvotingsystem9.vercel.app",
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "http://localhost:5174",
+];
 
-// ✅ CORS configuration: allow localhost:3000, 5173, 5174 and handle preflight properly
-// CORS configuration
-const FRONTEND_URLS = (process.env.FRONTEND_ORIGINS ||
-  'http://localhost:3000,http://localhost:5173,http://localhost:5174')
-  .split(',')
-  .map(url => url.trim().replace(/\/$/, '')); // remove trailing slash
-
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // allow apps like curl or server-to-server
-      if (!origin) {
-        console.debug('[CORS] No origin (curl/server-to-server), allowing');
-        return callback(null, true);
-      }
-
-      const cleanedOrigin = origin.replace(/\/$/, '');
-      console.debug('[CORS] Checking origin:', { origin, cleaned: cleanedOrigin, allowed: FRONTEND_URLS });
-
-      if (FRONTEND_URLS.includes(cleanedOrigin)) {
-        console.debug('[CORS] ✅ Origin allowed:', cleanedOrigin);
-        return callback(null, true);
-      }
-
-      // handle single env FRONTEND_URL
-      if (process.env.FRONTEND_URL &&
-          cleanedOrigin === process.env.FRONTEND_URL.replace(/\/$/, '')) {
-        console.debug('[CORS] ✅ Origin allowed (env FRONTEND_URL):', cleanedOrigin);
-        return callback(null, true);
-      }
-
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+  } else {
+    // Log blocked origins so you can see them in Render logs
+    console.warn("CORS BLOCKED:", origin);
+  }
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  if (req.method === "OPTIONS") return res.sendStatus(200);
+  next();
+});
       console.warn("CORS BLOCKED ORIGIN:", origin, "Allowed:", FRONTEND_URLS);
       return callback(new Error("Not allowed by CORS"));
     },
