@@ -3,7 +3,7 @@ import axios from "axios";
 
 const API_BASE =
   import.meta.env.VITE_API_URL?.trim().replace(/\/$/, "") ||
-  "http://localhost:5000/api";
+  "https://digital-voting-system-3.onrender.com/api";
 
 export const api = axios.create({
   baseURL: API_BASE,
