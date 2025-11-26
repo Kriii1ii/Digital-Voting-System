@@ -73,7 +73,8 @@ app.use((req, res, next) => {
   if (isAllowedOrigin(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
   } else {
-    console.warn("CORS BLOCKED:", origin);
+    // Quietly ignore requests without an Origin (server-to-server / health checks)
+    if (origin) console.warn("CORS BLOCKED:", origin);
   }
 
   res.setHeader("Access-Control-Allow-Credentials", "true");
