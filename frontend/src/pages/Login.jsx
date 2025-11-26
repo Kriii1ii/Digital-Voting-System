@@ -13,8 +13,7 @@ const Login = () => {
 
   const [credentials, setCredentials] = useState({
     email: "",
-    password: "",
-    role: "voter",
+    password: ""
   });
 
   const [errors, setErrors] = useState({});
@@ -23,30 +22,27 @@ const Login = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === "password") {
-      setCredentials(prev => ({ ...prev, [name]: value.slice(0, 30) }));
-    } else if (name === "email") {
-      setCredentials(prev => ({ ...prev, [name]: value.slice(0, 40) }));
-    } else {
-      setCredentials(prev => ({ ...prev, [name]: value }));
-    }
+
+    setCredentials(prev => ({
+      ...prev,
+      [name]: name === "password"
+        ? value.slice(0, 30)
+        : value.slice(0, 40)
+    }));
   };
 
   const validateForm = () => {
     const errs = {};
+
     if (!credentials.email.trim()) errs.email = "Email is required";
-    else if (!credentials.email.includes("@")) errs.email = "Invalid email address";
-    else if (credentials.email.length > 40) errs.email = "Email must be at most 40 characters";
+    else if (!credentials.email.includes("@")) errs.email = "Invalid email";
+    else if (credentials.email.length > 40) errs.email = "Max 40 characters";
 
     if (!credentials.password) errs.password = "Password is required";
     else if (credentials.password.length < 6)
-      errs.password = "Password must be at least 6 characters";
+      errs.password = "Min 6 characters";
     else if (credentials.password.length > 30)
-      errs.password = "Password must be at most 30 characters";
-
-    if (!credentials.role) errs.role = "Role is required";
-    else if (!["voter", "candidate", "admin", "electoral_committee"].includes(credentials.role))
-      errs.role = "Invalid role selected";
+      errs.password = "Max 30 characters";
 
     return errs;
   };
@@ -60,20 +56,21 @@ const Login = () => {
     if (Object.keys(validationErrors).length > 0) return;
 
     try {
-      console.log("Sending request to backend...");
+      console.log("Sending request:", credentials);
+
       const res = await loginUser(credentials);
-      console.log("Backend response:", res.data);
 
-      const token = res?.data?.token;
-      const user = res?.data;
+      console.log("Backend response:", res);
 
-      console.log("user: ", user);
+      const token = res.token;
+      const userData = res;
 
-      if (!token || !user) {
+      if (!token || !userData) {
         throw new Error("Invalid response from server");
       }
 
-      login(token, user, true);
+      // Save user in context
+      login(token, userData, true);
 
       const roleDashboardMap = {
         admin: "/admin-dashboard",
@@ -81,13 +78,15 @@ const Login = () => {
         electoral_committee: "/electoral-committee-dashboard",
         voter: "/voter-dashboard",
       };
-      navigate(roleDashboardMap[user.role] || "/voter-dashboard");
+
+      navigate(roleDashboardMap[userData.role] || "/voter-dashboard");
+
     } catch (err) {
       console.error("Login error:", err);
       setError(
-        err.response?.data?.message ||
+        err?.response?.data?.message ||
         err.message ||
-        "Login failed. Please check your credentials."
+        "Login failed. Please try again."
       );
     }
   };
@@ -98,10 +97,14 @@ const Login = () => {
 
   useEffect(() => {
     if (isAlreadyLoggedIn) {
-      if (user?.role === "admin") navigate("/admin-dashboard");
-      else if (user?.role === "candidate") navigate("/candidate-dashboard");
-      else if (user?.role === "electoral_committee") navigate("/electoral-committee-dashboard");
-      else if (user?.role === "voter") navigate("/voter-dashboard");
+      const dashboards = {
+        admin: "/admin-dashboard",
+        candidate: "/candidate-dashboard",
+        electoral_committee: "/electoral-committee-dashboard",
+        voter: "/voter-dashboard",
+      };
+
+      navigate(dashboards[user?.role] || "/voter-dashboard");
     }
   }, [isAlreadyLoggedIn, user, navigate]);
 
@@ -136,17 +139,18 @@ const Login = () => {
             value={credentials.email}
             onChange={handleChange}
             placeholder={t("emailPlaceholder")}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-all"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-blue-500"
             maxLength={40}
           />
           {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
         </div>
 
         {/* Password */}
-        <div className="relative">
+        <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             {t("password")} <span className="text-red-500">*</span>
           </label>
+
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
@@ -154,44 +158,39 @@ const Login = () => {
               value={credentials.password}
               onChange={handleChange}
               placeholder={t("passwordPlaceholder")}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-all pr-10"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-blue-500 pr-10"
               maxLength={30}
             />
+
             <button
               type="button"
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-800 transition-colors"
               onClick={() => setShowPassword(!showPassword)}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600"
             >
-              {showPassword ? (
-                <Eye className="w-5 h-5" />
-              ) : (
-                <EyeOff className="w-5 h-5" />
-              )}
+              {showPassword ? <Eye /> : <EyeOff />}
             </button>
           </div>
+
           {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
         </div>
 
         <button
           type="submit"
-          className="w-20 bg-blue-800 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+          className="w-20 bg-blue-800 text-white py-3 rounded-lg font-semibold hover:bg-blue-700"
         >
           {t("login")}
         </button>
+
         <p className="text-left text-sm">
-          {t("noAccount")}?{" "}
-          <Link
-            to="/register"
-            className="text-blue-600 underline hover:text-blue-800">
+          {t("noAccount")}?
+          <Link to="/register" className="text-blue-600 underline ml-1">
             {t("register")}
           </Link>
         </p>
 
         <p className="text-left text-sm">
-          {t("registeredasCandidate")}?{" "}
-          <Link
-            to="/loginCandidate"
-            className="text-blue-600 underline hover:text-blue-800">
+          {t("registeredasCandidate")}?
+          <Link to="/loginCandidate" className="text-blue-600 underline ml-1">
             {t("Login")}
           </Link>
         </p>
