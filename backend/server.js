@@ -42,22 +42,38 @@ connectDB();
 app.use(express.json({ limit: "10mb" }));
 
 // ======================================================
-// ✅ FIXED + CLEAN CORS FOR VERCEL + RENDER
+// ✅ CORS: whitelist + optional env override + Vercel preview allow
 // ======================================================
-const allowedOrigins = [
+// Default allowed origins (include your primary Vercel URL)
+const DEFAULT_ALLOWED_ORIGINS = [
   "https://digitalvotingsystem9.vercel.app",
   "http://localhost:3000",
   "http://localhost:5173",
   "http://localhost:5174",
 ];
 
+// Allow adding more origins via environment variable (comma separated)
+const envOrigins = (process.env.FRONTEND_ORIGINS || "")
+  .split(",")
+  .map((o) => o && o.trim())
+  .filter(Boolean);
+
+// Build the final allowed origins list (unique)
+const allowedOrigins = Array.from(new Set([...DEFAULT_ALLOWED_ORIGINS, ...envOrigins]));
+
+function isAllowedOrigin(origin) {
+  if (!origin) return false;
+  // Allow any Vercel subdomain (preview deployments) to avoid accidental blocking
+  if (origin.endsWith(".vercel.app")) return true;
+  return allowedOrigins.includes(origin);
+}
+
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-
-  if (allowedOrigins.includes(origin)) {
+  if (isAllowedOrigin(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
   } else {
-    console.warn("❌ CORS BLOCKED:", origin);
+    console.warn("CORS BLOCKED:", origin);
   }
 
   res.setHeader("Access-Control-Allow-Credentials", "true");
@@ -71,7 +87,7 @@ app.use((req, res, next) => {
   );
 
   if (req.method === "OPTIONS") {
-    return res.sendStatus(200); // Preflight success
+    return res.sendStatus(200);
   }
 
   next();
@@ -154,7 +170,13 @@ const server = http.createServer(app);
 // Clean Socket.IO CORS
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      // allow server-to-server or non-browser requests
+      if (!origin) return callback(null, true);
+      if (isAllowedOrigin(origin)) return callback(null, true);
+      console.warn('Socket.IO CORS BLOCKED:', origin);
+      return callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
   },
 });
